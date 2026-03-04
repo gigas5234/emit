@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { findMentorForColors, MentorColor } from "../../emotion/mentors";
 
 type SpeechRecognitionType =
@@ -102,8 +102,6 @@ function MentorChatInner() {
   const [isListening, setIsListening] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
-  const [shareStatus, setShareStatus] = useState("");
   const [sttError, setSttError] = useState("");
   const [apiError, setApiError] = useState("");
   const [speechDetected, setSpeechDetected] = useState(false);
@@ -482,30 +480,6 @@ function MentorChatInner() {
     return trimmed.split(/[.!?]/)[0]?.trim() ?? trimmed;
   };
 
-  const handleNativeShare = async () => {
-    if (isSharing) return;
-    setIsSharing(true);
-    setShareStatus("");
-    try {
-      const title = `E.M.I.T: ${(matchedRow?.mentorNameKr ?? selectedMentor.mentorName)}의 위로`;
-      const text = `[${n1} + ${n2}] 조합의 당신을 위한 한마디: ${extractSummaryQuote(mentorText)}`;
-      const url = typeof window !== "undefined" ? window.location.href : "";
-      const payload = { title, text, url };
-      const canShare = navigator.canShare ? navigator.canShare(payload) : true;
-      if (typeof navigator.share === "function" && canShare) {
-        await navigator.share(payload);
-        setShareStatus("공유가 완료되었습니다.");
-      } else {
-        await navigator.clipboard.writeText(`${title}\n${text}\n${url}`);
-        setShareStatus("브라우저 공유를 지원하지 않아 링크를 복사했습니다.");
-      }
-    } catch {
-      setShareStatus("공유에 실패했습니다.");
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
   const handleGoBack = () => {
     try {
       recognitionRef.current?.stop();
@@ -554,7 +528,7 @@ function MentorChatInner() {
       </div>
 
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 sm:px-8">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between">
           <button
             type="button"
             onClick={handleGoBack}
@@ -566,23 +540,16 @@ function MentorChatInner() {
 
           <button
             type="button"
-            onClick={handleNativeShare}
-            disabled={isSharing}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/90 backdrop-blur-md transition hover:bg-white/20"
-            aria-label="이 여정 공유하기"
-          >
-            <Share2 className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="mb-2 flex justify-center">
-          <button
-            type="button"
             onClick={handleEndJourney}
             disabled={isEnding || messages.length === 0}
-            className="rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-[0.72rem] font-semibold tracking-[0.08em] text-white/90 backdrop-blur-md transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-55"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-violet-400/40 bg-violet-500/20 text-violet-200 backdrop-blur-md transition hover:bg-violet-500/35 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="여정 저장 및 요약"
           >
-            {isEnding ? "요약 생성 중..." : "여정 종료"}
+            {isEnding ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-300/40 border-t-violet-200" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
           </button>
         </div>
 
@@ -686,54 +653,6 @@ function MentorChatInner() {
               : `API 오류: ${apiError}`}
           </p>
         )}
-        {shareStatus && (
-          <p className="mt-1 text-center text-[0.72rem] text-cyan-200/95">{shareStatus}</p>
-        )}
-
-        {/* Debug Panel */}
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={() => setShowDebug((v) => !v)}
-            className="mx-auto flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[0.6rem] text-white/40 transition hover:bg-white/10 hover:text-white/60"
-          >
-            🐛 진단 로그 {showDebug ? "닫기" : `열기 (${debugLogs.length})`}
-          </button>
-          {showDebug && (
-            <div className="mt-2 max-h-48 overflow-y-auto rounded-2xl border border-white/10 bg-black/70 p-3 backdrop-blur-md">
-              {debugLogs.length === 0 ? (
-                <p className="text-center font-mono text-[0.6rem] text-white/30">로그 없음 — 마이크 버튼을 눌러보세요</p>
-              ) : (
-                <div className="flex flex-col gap-0.5 font-mono text-[0.58rem]">
-                  {debugLogs.map((log, i) => (
-                    <div key={i} className="flex gap-1.5">
-                      <span className="shrink-0 text-white/30">{log.time}</span>
-                      <span
-                        className={
-                          log.type === "ok" ? "text-emerald-300/90" :
-                          log.type === "err" ? "text-rose-300/90" :
-                          log.type === "warn" ? "text-amber-300/80" :
-                          "text-cyan-200/70"
-                        }
-                      >
-                        {log.msg}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {debugLogs.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setDebugLogs([])}
-                  className="mt-2 w-full rounded-full border border-white/10 py-0.5 text-[0.55rem] text-white/25 hover:text-white/50"
-                >
-                  로그 지우기
-                </button>
-              )}
-            </div>
-          )}
-        </div>
       </section>
     </main>
   );

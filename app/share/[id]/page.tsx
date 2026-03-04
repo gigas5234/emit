@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Share2, RefreshCw } from "lucide-react";
 
 type ShareSummaryPayload = {
   id: string;
@@ -20,9 +21,12 @@ export default function SharePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const router = useRouter();
   const [id, setId] = useState("");
   const [data, setData] = useState<ShareSummaryPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [shareStatus, setShareStatus] = useState("");
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     params.then((p) => setId(p.id));
@@ -40,20 +44,56 @@ export default function SharePage({
       .finally(() => setLoading(false));
   }, [id]);
 
+  const handleShare = async () => {
+    if (isSharing || !data) return;
+    setIsSharing(true);
+    setShareStatus("");
+    try {
+      const title = `E.M.I.T: ${data.mentorNameKr}의 위로`;
+      const text = `[${data.emotionKeyword}] 조합의 처방전: ${data.quote}`;
+      const url = typeof window !== "undefined" ? window.location.href : "";
+      const payload = { title, text, url };
+      const canShare = navigator.canShare ? navigator.canShare(payload) : true;
+      if (typeof navigator.share === "function" && canShare) {
+        await navigator.share(payload);
+        setShareStatus("공유가 완료되었습니다.");
+      } else {
+        await navigator.clipboard.writeText(`${title}\n${text}\n${url}`);
+        setShareStatus("링크가 복사되었습니다.");
+      }
+    } catch {
+      setShareStatus("공유에 실패했습니다.");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleReselect = () => {
+    router.push("/emotion");
+  };
+
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-black text-white">
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-700/60 via-indigo-700/40 to-cyan-600/45" />
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#040611] via-[#06020D] to-[#020205]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_15%,rgba(130,75,255,0.45),transparent_55%),radial-gradient(circle_at_30%_80%,rgba(56,189,248,0.25),transparent_60%)]" />
+      </div>
+
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-xl flex-col items-center justify-center px-6 py-10">
-        <div className="w-full rounded-3xl border border-white/20 bg-black/30 p-6 text-center shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-md">
+        <div className="w-full rounded-3xl border border-white/15 bg-black/40 p-6 text-center shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-md">
           {loading ? (
-            <p className="text-white/85">요약 카드를 불러오는 중...</p>
+            <div className="py-10">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-violet-400/30 border-t-violet-300" />
+              <p className="mt-4 text-sm text-white/60">요약 카드를 불러오는 중...</p>
+            </div>
           ) : !data ? (
-            <p className="text-white/80">요약 정보를 찾지 못했습니다.</p>
+            <p className="py-6 text-white/70">요약 정보를 찾지 못했습니다.</p>
           ) : (
             <>
-              <p className="text-xs uppercase tracking-[0.22em] text-white/65">
+              <p className="text-[0.65rem] uppercase tracking-[0.22em] text-white/45">
                 E.M.I.T Prescription
               </p>
+
               <div className="mt-4 flex justify-center">
                 <Image
                   src="/mentors/sample.png"
@@ -63,28 +103,57 @@ export default function SharePage({
                   className="h-36 w-auto"
                 />
               </div>
-              <p className="mt-3 text-sm text-white/85">
-                [{data.mentorNameKr}] 멘토의 처방전
+
+              <p className="mt-3 text-sm font-semibold text-white/80">
+                {data.mentorNameKr} 멘토의 처방전
               </p>
-              <p className="mt-2 rounded-2xl bg-white/10 px-4 py-3 text-base leading-relaxed text-white/95">
-                {data.quote}
+
+              <p className="mt-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-4 text-base font-medium leading-relaxed text-white/95">
+                &ldquo;{data.quote}&rdquo;
               </p>
-              <p className="mt-3 text-xs text-white/70">
-                감정 키워드: {data.emotionKeyword}
+
+              <p className="mt-3 text-xs text-white/50">
+                감정 조합: {data.emotionKeyword}
               </p>
-              <p className="mt-2 text-sm text-white/80">{data.summary}</p>
+
+              {data.summary && (
+                <p className="mt-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-relaxed text-white/70">
+                  {data.summary}
+                </p>
+              )}
             </>
           )}
 
-          <Link
-            href="/"
-            className="mt-6 inline-flex rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white/90 transition hover:bg-white/20"
-          >
-            나도 멘토 만나러 가기
-          </Link>
+          {!loading && (
+            <div className="mt-6 flex flex-col gap-3">
+              {data && (
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  disabled={isSharing}
+                  className="flex w-full items-center justify-center gap-2 rounded-full border border-violet-400/40 bg-violet-500/25 px-5 py-3 text-sm font-semibold text-violet-100 backdrop-blur-md transition hover:bg-violet-500/40 disabled:opacity-50"
+                >
+                  <Share2 className="h-4 w-4" />
+                  {isSharing ? "공유 중..." : "공유하기"}
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleReselect}
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white/85 backdrop-blur-md transition hover:bg-white/20"
+              >
+                <RefreshCw className="h-4 w-4" />
+                감정 다시 선택하기
+              </button>
+            </div>
+          )}
+
+          {shareStatus && (
+            <p className="mt-3 text-center text-xs text-cyan-200/90">{shareStatus}</p>
+          )}
         </div>
       </section>
     </main>
   );
 }
-
