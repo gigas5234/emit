@@ -545,8 +545,10 @@ function MentorChatInner() {
           mentorNameKr: matchedRow?.mentorNameKr ?? selectedMentor.mentorName,
           mentorNameEn: matchedRow?.mentorNameEn ?? selectedMentor.mentorName,
           mentorId: matchedRow?.id,
-          color1: n1,
-          color2: n2,
+          color1: c1,   // hex value for share page background
+          color2: c2,
+          n1,           // emotion label for prompt
+          n2,
           messages,
         }),
       });
@@ -639,10 +641,19 @@ function MentorChatInner() {
           </div>
         </div>
 
+        {/* User speech bubble */}
         {userText && (
-          <p className="mb-2 text-center text-[0.75rem] text-white/60 sm:text-sm">
-            감지된 음성: <span className="text-white/85">{userText}</span>
-          </p>
+          <div className="mb-3 flex justify-end px-1">
+            <div
+              className="relative max-w-[72%] rounded-2xl rounded-br-sm border border-white/15 bg-white/12 px-4 py-2.5 text-[0.82rem] leading-relaxed text-white/90 backdrop-blur-md"
+              style={{ boxShadow: `0 4px 18px rgba(0,0,0,0.4)` }}
+            >
+              {isListening && !isThinking && (
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-sky-300 align-middle animate-pulse" />
+              )}
+              {userText}
+            </div>
+          </div>
         )}
 
         <div className="mb-2 flex h-14 w-full items-center justify-center gap-1 rounded-2xl border border-white/10 bg-black/40 px-3 backdrop-blur-md">

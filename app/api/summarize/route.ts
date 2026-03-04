@@ -24,8 +24,10 @@ export async function POST(req: Request) {
     const mentorNameKr = String(body?.mentorNameKr ?? "멘토");
     const mentorNameEn = String(body?.mentorNameEn ?? "Mentor");
     const mentorId = body?.mentorId ? String(body.mentorId) : undefined;
-    const emotion1 = String(body?.color1 ?? "감정 A");
-    const emotion2 = String(body?.color2 ?? "감정 B");
+    const hexColor1 = String(body?.color1 ?? "#7C3AED");  // hex for share page bg
+    const hexColor2 = String(body?.color2 ?? "#3B82F6");
+    const emotion1 = String(body?.n1 ?? body?.color1 ?? "감정 A");  // label for prompt
+    const emotion2 = String(body?.n2 ?? body?.color2 ?? "감정 B");
     const messages = Array.isArray(body?.messages)
       ? (body.messages as ChatMessage[])
       : [];
@@ -40,25 +42,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const conversation = messages
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    // Use last 6 exchanges to keep prompt short
+    const recent = messages.slice(-6);
+    const conversation = recent
       .map((m) => `${m.role === "assistant" ? "멘토" : "사용자"}: ${m.content}`)
       .join("\n");
 
-    const prompt = [
-      "아래 대화를 분석해서 정확히 다음 형식으로만 출력하십시오. 다른 설명은 절대 추가하지 마십시오.",
-      "",
-      "quote: (멘토가 대화에서 전한 가장 인상적인 한 문장. 멘토의 말투로 작성하되, 사용자가 간직할 수 있는 울림 있는 문장)",
-      "emotion: (사용자의 감정 조합 키워드 1~2개, 예: 우울, 지침)",
-      "healing: (0~100 사이 정수. 대화 전후 사용자의 감정 무게가 얼마나 가벼워졌는지 추정. 대화가 짧으면 30~50, 충분히 공감이 이루어졌으면 60~80)",
-      "journey: (감정 여정을 나타내는 3단계 한국어 단어, 쉼표로 구분. 예: 토로, 공감, 수용 / 혼란, 통찰, 결심)",
-      "",
-      `멘토: ${mentorNameKr} (${mentorNameEn})`,
-      `초기 감정: ${emotion1}, ${emotion2}`,
-      "",
-      "[대화]",
-      conversation,
-    ].join("\n");
+    const prompt =
+`다음 형식으로만 출력하라. 설명 없이 4줄만.
+quote: 멘토의 울림 있는 한 문장
+emotion: 감정 키워드 1~2개
+healing: 0~100 정수 (감정이 얼마나 가벼워졌나)
+journey: 3단계 한국어 단어, 쉼표 구분
+
+멘토:${mentorNameKr} | 초기감정:${emotion1},${emotion2}
+[대화]
+${conversation}`;
 
     const result = await model.generateContent(prompt);
     const raw = result.response.text()?.trim() ?? "";
@@ -85,8 +86,8 @@ export async function POST(req: Request) {
       mentorId,
       mentorNameKr,
       mentorNameEn,
-      color1: emotion1,
-      color2: emotion2,
+      color1: hexColor1,
+      color2: hexColor2,
       quote,
       emotionKeyword,
       healingScore,

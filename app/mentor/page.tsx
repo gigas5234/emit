@@ -239,9 +239,23 @@ function MentorIntroInner() {
           <button
             type="button"
             onClick={handleStartChat}
-            className="rounded-2xl border border-violet-200/70 bg-gradient-to-b from-violet-300 to-violet-500 px-6 py-3 text-sm font-semibold tracking-[0.06em] text-[#120822] shadow-[0_8px_30px_rgba(167,139,250,0.65)] transition hover:scale-[1.02] hover:brightness-110"
+            className="group relative overflow-hidden rounded-full px-10 py-3.5 text-sm font-semibold tracking-[0.12em] text-white transition-all duration-300 hover:scale-[1.04] active:scale-[0.97]"
+            style={{
+              background: `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`,
+              boxShadow: `0 0 28px ${c1}66, 0 0 56px ${c2}44, 0 8px 32px rgba(0,0,0,0.6)`,
+            }}
           >
-            대화 시작하기
+            {/* shimmer overlay */}
+            <span
+              className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+              style={{
+                background:
+                  "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%)",
+              }}
+            />
+            <span className="relative z-10" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.45)" }}>
+              대화 시작하기
+            </span>
           </button>
         </div>
       </section>
