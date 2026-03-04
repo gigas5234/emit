@@ -206,6 +206,7 @@ function MentorInner() {
   ]);
   const [isListening, setIsListening] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [liveModeEnabled, setLiveModeEnabled] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [sttSupported, setSttSupported] = useState(true);
@@ -224,6 +225,8 @@ function MentorInner() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const isThinkingRef = useRef(false);
+  const isIntroFinishedRef = useRef(false);
+  const liveModeEnabledRef = useRef(false);
 
   useEffect(() => {
     fetch("/mentors.csv")
@@ -257,6 +260,14 @@ function MentorInner() {
   useEffect(() => {
     isThinkingRef.current = isThinking;
   }, [isThinking]);
+
+  useEffect(() => {
+    isIntroFinishedRef.current = isIntroFinished;
+  }, [isIntroFinished]);
+
+  useEffect(() => {
+    liveModeEnabledRef.current = liveModeEnabled;
+  }, [liveModeEnabled]);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -414,7 +425,11 @@ function MentorInner() {
       const err = String(event?.error ?? "음성 인식 오류");
       if (err === "aborted") {
         setSttError("");
-        if (isIntroFinished && !isThinkingRef.current) {
+        if (
+          isIntroFinishedRef.current &&
+          liveModeEnabledRef.current &&
+          !isThinkingRef.current
+        ) {
           setTimeout(() => {
             try {
               recognition.start();
@@ -434,7 +449,11 @@ function MentorInner() {
       setIsListening(false);
       const pending = `${transcriptBufferRef.current} ${interimBufferRef.current}`.trim();
       if (pending && !isThinkingRef.current) flushTranscriptToApi(pending);
-      if (isIntroFinished && !isThinkingRef.current) {
+      if (
+        isIntroFinishedRef.current &&
+        liveModeEnabledRef.current &&
+        !isThinkingRef.current
+      ) {
         try {
           recognition.start();
           setIsListening(true);
@@ -452,27 +471,18 @@ function MentorInner() {
         // noop
       }
     };
-  }, [isIntroFinished]);
-
-  useEffect(() => {
-    if (!isIntroFinished || !sttSupported || !recognitionRef.current) return;
-    if (isListening || isThinking) return;
-    try {
-      recognitionRef.current.start();
-      setIsListening(true);
-    } catch {
-      // noop
-    }
-  }, [isIntroFinished, isListening, isThinking, sttSupported]);
+  }, []);
 
   const toggleMic = () => {
     if (!recognitionRef.current) return;
     if (isListening) {
+      setLiveModeEnabled(false);
       recognitionRef.current.stop();
       setIsListening(false);
       return;
     }
     try {
+      setLiveModeEnabled(true);
       recognitionRef.current.start();
       setIsListening(true);
     } catch {
@@ -486,9 +496,29 @@ function MentorInner() {
     } catch {
       // noop
     }
+    setLiveModeEnabled(false);
     setIsListening(false);
     setIsIntroFinished(false);
     setShareStatus("대화를 종료했어요. 필요하면 다시 시작해 주세요.");
+  };
+
+  const startLiveConversation = async () => {
+    setIsIntroFinished(true);
+    setLiveModeEnabled(true);
+    setSttError("");
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      setTimeout(() => {
+        try {
+          recognitionRef.current?.start();
+          setIsListening(true);
+        } catch {
+          // noop
+        }
+      }, 180);
+    } catch {
+      setSttError("마이크 권한을 허용해 주세요. 권한이 없으면 STT가 동작하지 않습니다.");
+    }
   };
 
   const waveformBars = Array.from({ length: 24 }, (_, i) => i);
@@ -664,7 +694,7 @@ function MentorInner() {
               <div className="mt-6 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => setIsIntroFinished(true)}
+                  onClick={startLiveConversation}
                   className="rounded-2xl border border-violet-200/70 bg-gradient-to-b from-violet-300 to-violet-500 px-6 py-3 text-sm font-semibold tracking-[0.06em] text-[#120822] shadow-[0_8px_30px_rgba(167,139,250,0.65)] transition hover:scale-[1.02] hover:brightness-110"
                 >
                   대화 시작하기
@@ -696,19 +726,24 @@ function MentorInner() {
               </div>
 
               <div className="relative flex flex-1 items-center justify-center">
-                <motion.div
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <Image
-                    src="/mentors/sample.png"
-                    alt="Mentor figure"
-                    width={360}
-                    height={360}
-                    priority
-                    className="h-60 w-auto sm:h-72"
-                  />
-                </motion.div>
+                <div className="flex flex-col items-center">
+                  <p className="mb-2 rounded-full border border-white/25 bg-white/10 px-4 py-1 text-[0.72rem] font-semibold tracking-[0.14em] text-white/90 backdrop-blur-md">
+                    {matchedRow?.mentorNameKr ?? selectedMentor.mentorName}
+                  </p>
+                  <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <Image
+                      src="/mentors/sample.png"
+                      alt="Mentor figure"
+                      width={360}
+                      height={360}
+                      priority
+                      className="h-60 w-auto sm:h-72"
+                    />
+                  </motion.div>
+                </div>
               </div>
 
               {userText && (
@@ -736,25 +771,7 @@ function MentorInner() {
                 })}
               </div>
 
-              <div className="mt-3 flex items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleEndChat}
-                  className="inline-flex items-center gap-2 rounded-full border border-rose-200/80 bg-rose-100 px-4 py-3 text-sm font-semibold text-rose-900 shadow-[0_6px_20px_rgba(251,113,133,0.35)] transition hover:brightness-105"
-                >
-                  대화 종료
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleNativeShare}
-                  disabled={isSharing}
-                  className="inline-flex items-center gap-2 rounded-full border border-cyan-200/80 bg-cyan-100 px-4 py-3 text-sm font-semibold text-cyan-900 shadow-[0_6px_20px_rgba(103,232,249,0.45)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  <Share2 className="h-4 w-4" />
-                  이 여정 공유하기
-                </button>
-
+              <div className="mt-3 flex items-center justify-center">
                 <button
                   type="button"
                   onClick={toggleMic}
@@ -781,6 +798,28 @@ function MentorInner() {
                   {shareStatus}
                 </p>
               )}
+
+              <div className="mt-4 rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-md">
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={handleEndChat}
+                    className="inline-flex min-w-32 items-center justify-center rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white/90 shadow-[0_6px_20px_rgba(0,0,0,0.28)] transition hover:bg-white/20"
+                  >
+                    대화 종료
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleNativeShare}
+                    disabled={isSharing}
+                    className="inline-flex min-w-40 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white/95 shadow-[0_6px_20px_rgba(0,0,0,0.28)] transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    이 여정 공유하기
+                  </button>
+                </div>
+              </div>
             </motion.section>
           )}
         </AnimatePresence>

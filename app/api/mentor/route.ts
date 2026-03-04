@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     if (mode === "summary") {
       if (!messages.length) {
@@ -95,9 +95,11 @@ export async function POST(req: Request) {
       "당신의 지금 감정을 있는 그대로 바라보는 것만으로도 이미 중요한 한 걸음을 내디딘 거예요.";
 
     return NextResponse.json({ reply });
-  } catch {
+  } catch (error) {
+    const details =
+      error instanceof Error ? error.message : "Unknown Gemini API error";
     return NextResponse.json(
-      { error: "Failed to process mentor request" },
+      { error: "Failed to process mentor request", details },
       { status: 500 }
     );
   }

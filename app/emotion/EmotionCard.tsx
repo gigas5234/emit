@@ -31,7 +31,25 @@ const variants = {
   enter: { opacity: 1, y: 0, scale: 1 },
 };
 
+function hexToRgba(hex: string, alpha: number) {
+  const raw = hex.replace("#", "");
+  const normalized =
+    raw.length === 3
+      ? raw
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : raw;
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function EmotionCard({ emotion, selected, onToggle }: EmotionCardProps) {
+  const strong = hexToRgba(emotion.color, selected ? 0.75 : 0.42);
+  const soft = hexToRgba(emotion.color, selected ? 0.45 : 0.24);
+
   return (
     <motion.button
       type="button"
@@ -50,8 +68,11 @@ export function EmotionCard({ emotion, selected, onToggle }: EmotionCardProps) {
       <div
         className="pointer-events-none absolute inset-0 mix-blend-screen"
         style={{
-          opacity: selected ? 0.5 : 0.18,
-          background: `radial-gradient(circle at 0% 0%, ${emotion.color}AA, transparent 55%)`,
+          opacity: selected ? 0.9 : 0.62,
+          background: `
+            radial-gradient(circle at 10% 12%, ${strong} 0%, ${soft} 48%, transparent 90%),
+            linear-gradient(115deg, ${soft} 0%, transparent 70%)
+          `,
         }}
       />
       {/* 선택 시 외곽선 + 네온 하이라이트 */}
