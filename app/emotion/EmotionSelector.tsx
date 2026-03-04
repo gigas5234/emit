@@ -207,24 +207,26 @@ export default function EmotionSelector() {
           {/* CTA */}
           <section className="mt-6 flex justify-center">
             <motion.button
-              whileHover={
-                canProceed
-                  ? {
-                      scale: 1.03,
-                      boxShadow: "0 0 28px rgba(167,139,250,0.9)",
-                    }
-                  : undefined
-              }
+              whileHover={canProceed ? { scale: 1.04 } : undefined}
               whileTap={{ scale: 0.97 }}
               disabled={!canProceed}
-              className={`
-                inline-flex items-center justify-center rounded-full border px-8 py-3 text-xs font-semibold tracking-[0.24em] sm:text-sm
-                ${
-                  canProceed
-                    ? "border-purple-200/80 bg-gradient-to-r from-purple-400 via-fuchsia-500 to-rose-500 text-white shadow-[0_18px_45px_rgba(0,0,0,0.9)]"
-                    : "border-white/15 bg-white/5 text-white/60 shadow-none cursor-not-allowed"
-                }
-              `}
+              className="inline-flex items-center justify-center rounded-full border px-8 py-3.5 text-xs font-bold tracking-[0.18em] transition-all sm:text-sm"
+              style={
+                canProceed
+                  ? {
+                      background: `linear-gradient(135deg, ${selectedColors[0]} 0%, ${selectedColors[1]} 100%)`,
+                      borderColor: "rgba(255,255,255,0.35)",
+                      color: "#fff",
+                      textShadow: "0 1px 6px rgba(0,0,0,0.55)",
+                      boxShadow: `0 0 24px ${selectedColors[0]}88, 0 0 48px ${selectedColors[1]}55, 0 8px 32px rgba(0,0,0,0.7)`,
+                    }
+                  : {
+                      borderColor: "rgba(255,255,255,0.12)",
+                      background: "rgba(255,255,255,0.05)",
+                      color: "rgba(255,255,255,0.45)",
+                      cursor: "not-allowed",
+                    }
+              }
               onClick={handleProceed}
             >
               {canProceed

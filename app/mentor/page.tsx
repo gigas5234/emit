@@ -128,17 +128,35 @@ function MentorIntroInner() {
       </div>
 
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 sm:px-8">
-        <p className="text-center text-sm tracking-[0.08em] text-white/80 sm:text-base">
+        <p className="text-center text-xs tracking-[0.14em] text-white/55 sm:text-sm">
           감정의 주파수가 일치하는 멘토를 찾았습니다.
         </p>
 
-        <div className="mt-6 grid flex-1 grid-cols-1 items-center gap-6 lg:grid-cols-[1.1fr_1fr_1.1fr]">
-          <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
-            <p className="text-[0.68rem] uppercase tracking-[0.2em] text-violet-200">Mentor</p>
-            <p className="mt-1 text-sm leading-relaxed text-white/90">
-              {matchedRow?.mentorNameKr ?? "멘토"} ({matchedRow?.mentorNameEn ?? selectedMentor.mentorName})
+        {/* Mentor name highlight */}
+        <div className="mt-4 flex flex-col items-center gap-1">
+          <p className="text-[0.6rem] uppercase tracking-[0.3em] text-white/40">Your Mentor</p>
+          <h1
+            className="text-center text-2xl font-extrabold tracking-wide sm:text-3xl"
+            style={{
+              background: `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              filter: `drop-shadow(0 0 14px ${c1}88) drop-shadow(0 0 28px ${c2}66)`,
+            }}
+          >
+            {matchedRow?.mentorNameKr ?? selectedMentor.mentorName}
+          </h1>
+          {matchedRow?.mentorNameEn && (
+            <p className="text-xs tracking-[0.18em] text-white/45">
+              {matchedRow.mentorNameEn}
             </p>
-            <p className="mt-4 text-[0.68rem] uppercase tracking-[0.2em] text-violet-200">Context</p>
+          )}
+        </div>
+
+        <div className="mt-4 grid flex-1 grid-cols-1 items-center gap-6 lg:grid-cols-[1.1fr_1fr_1.1fr]">
+          <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
+            <p className="text-[0.68rem] uppercase tracking-[0.2em] text-violet-200">Context</p>
             <p className="mt-1 text-[0.82rem] leading-relaxed text-white/85">
               {n1}와 {n2}가 만나 만들어낸 감정의 흐름을 함께 읽어냅니다.
             </p>
