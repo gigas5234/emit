@@ -153,7 +153,10 @@ export default function EmotionSelector() {
                 priority
               />
             </div>
-            <span className="text-xs font-semibold tracking-[0.25em] text-white/80 sm:text-sm">
+            <span
+              className="text-xs tracking-[0.32em] text-white/80 sm:text-sm"
+              style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+            >
               E.M.I.T
             </span>
           </Link>
@@ -169,10 +172,16 @@ export default function EmotionSelector() {
           {/* orb area */}
           <section className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:items-start sm:gap-10">
             <div className="text-center sm:text-left">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-purple-100/85 sm:text-sm">
+              <p
+                className="text-[0.62rem] uppercase tracking-[0.38em] text-purple-100/75 sm:text-[0.68rem]"
+                style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+              >
                 Emotion Mix
               </p>
-              <p className="mt-2 max-w-xs text-[0.8rem] text-white/80 sm:text-sm">
+              <p
+                className="mt-2 max-w-xs text-[0.8rem] leading-relaxed text-white/72 sm:text-sm"
+                style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
+              >
                 지금 당신의 감정을 두 가지까지 선택해 보세요. 섞인 색을 바탕으로,
                 당신의 마음을 가장 잘 이해해 줄 멘토를 찾아 드립니다.
               </p>
@@ -210,7 +219,8 @@ export default function EmotionSelector() {
               whileHover={canProceed ? { scale: 1.04 } : undefined}
               whileTap={{ scale: 0.97 }}
               disabled={!canProceed}
-              className="inline-flex items-center justify-center rounded-full border px-8 py-3.5 text-xs font-bold tracking-[0.18em] transition-all sm:text-sm"
+              className="inline-flex items-center justify-center rounded-full border px-8 py-3.5 text-xs tracking-[0.2em] transition-all sm:text-sm"
+              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 400 }}
               style={
                 canProceed
                   ? {

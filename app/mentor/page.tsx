@@ -171,13 +171,19 @@ function MentorIntroInner() {
       </div>
 
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 sm:px-8">
-        <p className="text-center text-xs tracking-[0.14em] text-white/55 sm:text-sm">
+        <p
+          className="text-center text-[0.65rem] tracking-[0.28em] text-white/50 sm:text-[0.72rem]"
+          style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+        >
           감정의 주파수가 일치하는 멘토를 찾았습니다.
         </p>
 
         {/* Mentor name highlight */}
         <div className="mt-4 flex flex-col items-center gap-1">
-          <p className="text-[0.6rem] uppercase tracking-[0.3em] text-white/40">Your Mentor</p>
+          <p
+            className="text-[0.58rem] uppercase tracking-[0.38em] text-white/38"
+            style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+          >Your Mentor</p>
           <h1
             className="text-center text-2xl font-extrabold tracking-wide sm:text-3xl"
             style={{
@@ -199,8 +205,14 @@ function MentorIntroInner() {
 
         <div className="mt-4 grid flex-1 grid-cols-1 items-center gap-6 lg:grid-cols-[1.1fr_1fr_1.1fr]">
           <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
-            <p className="text-[0.68rem] uppercase tracking-[0.2em] text-violet-200">Context</p>
-            <p className="mt-1 text-[0.82rem] leading-relaxed text-white/85">
+            <p
+              className="text-[0.6rem] uppercase tracking-[0.32em] text-violet-200/80"
+              style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+            >Context</p>
+            <p
+              className="mt-1 text-[0.82rem] leading-relaxed text-white/82"
+              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
+            >
               {n1}와 {n2}가 만나 만들어낸 감정의 흐름을 함께 읽어냅니다.
             </p>
           </div>
@@ -223,12 +235,24 @@ function MentorIntroInner() {
           </div>
 
           <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
-            <p className="text-[0.68rem] uppercase tracking-[0.2em] text-violet-200">Why</p>
-            <p className="mt-1 text-[0.82rem] leading-relaxed text-white/85">
+            <p
+              className="text-[0.6rem] uppercase tracking-[0.32em] text-violet-200/80"
+              style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+            >Why</p>
+            <p
+              className="mt-1 text-[0.82rem] leading-relaxed text-white/82"
+              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
+            >
               {matchedRow?.selectionReason ?? selectedMentor.coreExperienceInsight}
             </p>
-            <p className="mt-4 text-[0.68rem] uppercase tracking-[0.2em] text-violet-200">Mission</p>
-            <p className="mt-1 text-[0.82rem] leading-relaxed text-white/85">
+            <p
+              className="mt-4 text-[0.6rem] uppercase tracking-[0.32em] text-violet-200/80"
+              style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+            >Mission</p>
+            <p
+              className="mt-1 text-[0.82rem] leading-relaxed text-white/82"
+              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
+            >
               {matchedRow?.mission ??
                 "이번 대화에서 감정의 원인을 구조적으로 이해하고 다음 행동을 설계합니다."}
             </p>

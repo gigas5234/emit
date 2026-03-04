@@ -223,7 +223,10 @@ export default function SharePage({
           ) : (
             <>
               {/* Header label */}
-              <p className="text-[0.6rem] uppercase tracking-[0.28em] text-white/35">
+              <p
+                className="text-[0.58rem] uppercase tracking-[0.38em] text-white/32"
+                style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+              >
                 E.M.I.T Prescription
               </p>
 
@@ -240,17 +243,26 @@ export default function SharePage({
               </div>
 
               {/* Mentor name */}
-              <p className="mt-2 text-sm font-bold tracking-wide text-white/90">
+              <p
+                className="mt-2 text-sm tracking-[0.1em] text-white/90"
+                style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 400 }}
+              >
                 {data.mentorNameKr} 멘토의 처방전
               </p>
 
               {/* Quote */}
-              <p className="mt-3 rounded-2xl border border-white/15 bg-white/8 px-4 py-4 text-[0.93rem] font-medium italic leading-relaxed text-white/95">
+              <p
+                className="mt-3 rounded-2xl border border-white/15 bg-white/8 px-4 py-4 text-[0.9rem] italic leading-relaxed text-white/95"
+                style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+              >
                 &ldquo;{data.quote}&rdquo;
               </p>
 
               {/* Emotion keywords */}
-              <p className="mt-2 text-[0.7rem] tracking-wide text-white/40">
+              <p
+                className="mt-2 text-[0.64rem] tracking-[0.2em] text-white/38"
+                style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+              >
                 감정 조합 · {data.emotionKeyword}
               </p>
 
@@ -258,7 +270,10 @@ export default function SharePage({
               <div className="my-4 h-px w-full bg-white/10" />
 
               {/* Healing arc gauge */}
-              <p className="mb-2 text-[0.65rem] uppercase tracking-[0.2em] text-white/35">
+              <p
+                className="mb-2 text-[0.6rem] uppercase tracking-[0.3em] text-white/32"
+                style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+              >
                 감정 회복 지수
               </p>
               <HealingArc
@@ -270,7 +285,10 @@ export default function SharePage({
               {/* Journey flow */}
               {data.journeyWords?.length > 0 && (
                 <div className="mt-4">
-                  <p className="mb-2 text-[0.65rem] uppercase tracking-[0.2em] text-white/35">
+                  <p
+                    className="mb-2 text-[0.6rem] uppercase tracking-[0.3em] text-white/32"
+                    style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+                  >
                     감정 여정
                   </p>
                   <JourneyFlow

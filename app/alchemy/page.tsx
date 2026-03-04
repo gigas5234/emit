@@ -52,7 +52,10 @@ function AlchemyInner() {
   return (
     <>
       {/* top hint */}
-      <p className="mb-6 text-[0.7rem] uppercase tracking-[0.32em] text-purple-100/80 sm:mb-8 sm:text-xs">
+      <p
+        className="mb-6 text-[0.65rem] uppercase tracking-[0.42em] text-purple-100/70 sm:mb-8 sm:text-[0.7rem]"
+        style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+      >
         Emotion Alchemy
       </p>
 
@@ -81,6 +84,7 @@ function AlchemyInner() {
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
               className="px-4 text-white/85 drop-shadow-[0_0_14px_rgba(0,0,0,0.9)]"
+              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
             >
               {currentMessage}
             </motion.p>
