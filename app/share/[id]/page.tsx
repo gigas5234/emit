@@ -103,25 +103,15 @@ export default function SharePage({
               </p>
 
               <div className="mt-4 flex justify-center">
-                <div
-                  className="relative overflow-hidden rounded-2xl"
-                  style={{ width: 140, height: 180, isolation: "isolate" }}
-                >
-                  <div
-                    className="pointer-events-none absolute inset-0"
-                    style={{
-                      background:
-                        "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.85) 0%, rgba(130,75,255,0.4) 50%, transparent 80%)",
-                    }}
-                  />
+                <div className="relative h-44 w-36 overflow-hidden rounded-2xl">
                   <Image
                     src={getMentorImage(data.mentorId)}
                     alt="Mentor"
                     fill
+                    sizes="144px"
                     style={{
                       objectFit: "cover",
                       objectPosition: "center 5%",
-                      mixBlendMode: "multiply",
                     }}
                   />
                 </div>

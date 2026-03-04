@@ -590,30 +590,16 @@ function MentorChatInner() {
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
-              <div
-                className="relative overflow-hidden rounded-3xl"
-                style={{
-                  width: 200,
-                  height: 260,
-                  isolation: "isolate",
-                }}
-              >
-                {/* Glow layer — provides light backdrop for mix-blend-multiply */}
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    background: `radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.85) 0%, ${c1}55 45%, ${c2}30 65%, transparent 85%)`,
-                  }}
-                />
+              <div className="relative h-60 w-44 overflow-hidden rounded-3xl sm:h-72 sm:w-52">
                 <Image
                   src={getMentorImage(matchedRow?.id)}
                   alt="Mentor figure"
                   fill
                   priority
+                  sizes="(max-width: 640px) 176px, 208px"
                   style={{
                     objectFit: "cover",
                     objectPosition: "center 5%",
-                    mixBlendMode: "multiply",
                   }}
                 />
               </div>

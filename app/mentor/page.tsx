@@ -174,30 +174,16 @@ function MentorIntroInner() {
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
             >
-              <div
-                className="relative overflow-hidden rounded-3xl"
-                style={{
-                  width: 220,
-                  height: 300,
-                  isolation: "isolate",
-                }}
-              >
-                {/* Glow layer — provides the light backdrop for mix-blend-multiply */}
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    background: `radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.88) 0%, ${c1}55 45%, ${c2}30 65%, transparent 85%)`,
-                  }}
-                />
+              <div className="relative h-72 w-52 overflow-hidden rounded-3xl sm:h-80 sm:w-60">
                 <Image
                   src={getMentorImage(matchedRow?.id)}
                   alt="Mentor figure"
                   fill
                   priority
+                  sizes="(max-width: 640px) 208px, 240px"
                   style={{
                     objectFit: "cover",
                     objectPosition: "center 5%",
-                    mixBlendMode: "multiply",
                   }}
                 />
               </div>
