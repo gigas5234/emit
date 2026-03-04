@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useEffect, useState, PointerEvent } from "react";
 
@@ -15,6 +16,7 @@ const teaserPhrases = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const mvX = useMotionValue(0);
   const mvY = useMotionValue(0);
 
@@ -161,6 +163,7 @@ export default function Home() {
               }}
               whileTap={{ scale: 0.98 }}
               className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border border-purple-300/70 bg-gradient-to-r from-purple-500/90 via-purple-400/90 to-fuchsia-500/90 px-6 py-3 text-[0.8rem] font-semibold tracking-[0.2em] text-white sm:text-sm"
+              onClick={() => router.push("/login")}
             >
               <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.3),transparent_55%),radial-gradient(circle_at_70%_60%,rgba(167,139,250,0.35),transparent_55%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             <span className="relative z-10">여정 시작하기</span>
