@@ -109,14 +109,14 @@ export default function Home() {
       </motion.div>
 
       {/* Foreground content (no scroll layout) */}
-      <section className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-8">
+      <section className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-4 sm:py-8">
         {/* 상단 로고 (중앙보다 위, 약간 더 크게) */}
-        <div className="flex w-full justify-center pt-6">
+        <div className="flex w-full justify-center pt-4 sm:pt-6">
           <motion.div
             className="relative"
             style={{ x: logoX, y: logoY }}
           >
-            <div className="relative h-36 w-36 overflow-hidden rounded-full shadow-[0_0_32px_rgba(147,51,234,0.7)] sm:h-48 sm:w-48">
+            <div className="relative h-36 w-36 overflow-hidden rounded-full shadow-[0_18px_40px_rgba(0,0,0,0.85)] sm:h-48 sm:w-48">
               <Image
                 src="/00.logo.png"
                 alt="E.M.I.T Logo"
@@ -129,7 +129,7 @@ export default function Home() {
         </div>
 
         {/* 중앙 메인 카피 + 진입 박스 */}
-        <div className="flex flex-1 flex-col items-center justify-center space-y-8">
+        <div className="flex flex-1 flex-col items-center justify-center space-y-5 sm:space-y-8">
           <div className="relative h-20 w-full max-w-xl text-center">
             <AnimatePresence mode="wait">
               <motion.p
@@ -146,7 +146,7 @@ export default function Home() {
           </div>
 
           {/* 진입용 글래스 박스 */}
-          <div className="w-full max-w-xl rounded-3xl border border-white/15 bg-white/5 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.85)] backdrop-blur-md sm:p-7">
+          <div className="w-full max-w-xl rounded-3xl border border-white/15 bg-white/5 p-5 shadow-[0_24px_50px_rgba(0,0,0,0.85)] backdrop-blur-md sm:p-7">
             <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-purple-100/85 sm:text-xs">
               E.M.I.T · EMOTION MENTORING IN TIME
             </p>
@@ -169,8 +169,8 @@ export default function Home() {
         </div>
 
         {/* 하단 티저 텍스트 (위인 멘트) */}
-        <div className="mb-4 flex h-10 w-full items-end justify-center text-xs text-white/70">
-          <div className="relative h-8 overflow-hidden">
+        <div className="mb-2 flex h-8 w-full items-end justify-center text-xs text-white/70 sm:mb-4 sm:h-10">
+          <div className="relative h-7 overflow-hidden sm:h-8">
             <AnimatePresence mode="wait">
               <motion.p
                 key={teaserIndex}
