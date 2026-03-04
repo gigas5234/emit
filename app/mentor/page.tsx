@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { findMentorForColors, MentorColor } from "../emotion/mentors";
+import { Share2 } from "lucide-react";
 
 type SpeechRecognitionType =
   | (any & { continuous?: boolean; interimResults?: boolean })
@@ -34,6 +35,38 @@ const HEX_TO_COLOR: Record<string, MentorColor> = {
   "#000080": "Navy",
 };
 
+const MIXED_COLOR_LABEL_KR: Record<string, string> = {
+  Muted_Violet: "뮤티드 바이올렛",
+  Warm_Orange: "웜 오렌지",
+  Deep_Magenta: "딥 마젠타",
+  Ashen_Red: "애쉬 레드",
+  Earthy_Brown: "어시 브라운",
+  Fiery_Amber: "파이어리 앰버",
+  Dark_Crimson: "다크 크림슨",
+  Soft_Green: "소프트 그린",
+  Indigo_Mist: "인디고 미스트",
+  Dust_Blue: "더스트 블루",
+  Teal_Blue: "틸 블루",
+  Burnt_Sienna: "번트 시에나",
+  Midnight_Blue: "미드나잇 블루",
+  Pale_Gold: "펄 골드",
+  Silver_Yellow: "실버 옐로우",
+  Lime_Gold: "라임 골드",
+  Sunset_Orange: "선셋 오렌지",
+  Ethereal_Blue: "에테리얼 블루",
+  Cloudy_Purple: "클라우디 퍼플",
+  Sage_Purple: "세이지 퍼플",
+  Vibrant_Plum: "바이브런트 플럼",
+  Cosmic_Indigo: "코스믹 인디고",
+  Olive_Gray: "올리브 그레이",
+  Steel_Orange: "스틸 오렌지",
+  Deep_Charcoal: "딥 차콜",
+  Rusty_Copper: "러스티 코퍼",
+  Dark_Teal: "다크 틸",
+  Stormy_Blue: "스톰 블루",
+  Resonance_Tone: "공명 톤",
+};
+
 const introListVariants = {
   hidden: { opacity: 0 },
   show: {
@@ -49,6 +82,18 @@ const introItemVariants = {
 
 function normalizeHex(hex: string) {
   return hex.trim().toUpperCase();
+}
+
+function hasFinalConsonant(word: string) {
+  const target = word.trim();
+  if (!target) return false;
+  const code = target.charCodeAt(target.length - 1);
+  if (code < 0xac00 || code > 0xd7a3) return false;
+  return (code - 0xac00) % 28 !== 0;
+}
+
+function pickParticle(word: string, withBatchim: string, withoutBatchim: string) {
+  return hasFinalConsonant(word) ? withBatchim : withoutBatchim;
 }
 
 function parseCsvLine(line: string): string[] {
@@ -161,6 +206,8 @@ function MentorInner() {
   ]);
   const [isListening, setIsListening] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
   const [sttSupported, setSttSupported] = useState(true);
   const [audioLevel, setAudioLevel] = useState(0);
   const [sttError, setSttError] = useState("");
@@ -177,8 +224,6 @@ function MentorInner() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const isThinkingRef = useRef(false);
-  const audioLevelRef = useRef(0);
-  const liveThreshold = 0.07;
 
   useEffect(() => {
     fetch("/mentors.csv")
@@ -199,6 +244,16 @@ function MentorInner() {
     );
   }, [mentorRows, c1Key, c2Key, m1, m2]);
 
+  const mixedColorLabelKr = useMemo(() => {
+    return MIXED_COLOR_LABEL_KR[selectedMentor.mixedColorResult] ?? selectedMentor.mixedColorResult;
+  }, [selectedMentor.mixedColorResult]);
+
+  const contextLine = useMemo(() => {
+    const p1 = pickParticle(n1, "과", "와");
+    const p2 = pickParticle(n2, "이", "가");
+    return `${n1}${p1} ${n2}${p2} 만나 만들어낸 ${mixedColorLabelKr}의 심리 상태를 분석합니다.`;
+  }, [n1, n2, mixedColorLabelKr]);
+
   useEffect(() => {
     isThinkingRef.current = isThinking;
   }, [isThinking]);
@@ -206,10 +261,6 @@ function MentorInner() {
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
-
-  useEffect(() => {
-    audioLevelRef.current = audioLevel;
-  }, [audioLevel]);
 
   const stopSilenceTimer = () => {
     if (silenceTimerRef.current) {
@@ -360,7 +411,22 @@ function MentorInner() {
     };
 
     recognition.onerror = (event: any) => {
-      setSttError(String(event?.error ?? "음성 인식 오류"));
+      const err = String(event?.error ?? "음성 인식 오류");
+      if (err === "aborted") {
+        setSttError("");
+        if (isIntroFinished && !isThinkingRef.current) {
+          setTimeout(() => {
+            try {
+              recognition.start();
+              setIsListening(true);
+            } catch {
+              // noop
+            }
+          }, 250);
+        }
+        return;
+      }
+      setSttError(err);
       setIsListening(false);
     };
 
@@ -368,11 +434,7 @@ function MentorInner() {
       setIsListening(false);
       const pending = `${transcriptBufferRef.current} ${interimBufferRef.current}`.trim();
       if (pending && !isThinkingRef.current) flushTranscriptToApi(pending);
-      if (
-        isIntroFinished &&
-        audioLevelRef.current > liveThreshold * 0.8 &&
-        !isThinkingRef.current
-      ) {
+      if (isIntroFinished && !isThinkingRef.current) {
         try {
           recognition.start();
           setIsListening(true);
@@ -393,16 +455,15 @@ function MentorInner() {
   }, [isIntroFinished]);
 
   useEffect(() => {
-    if (!isIntroFinished) return;
-    if (!sttSupported || !recognitionRef.current || isListening || isThinking) return;
-    if (audioLevel < liveThreshold) return;
+    if (!isIntroFinished || !sttSupported || !recognitionRef.current) return;
+    if (isListening || isThinking) return;
     try {
       recognitionRef.current.start();
       setIsListening(true);
     } catch {
       // noop
     }
-  }, [audioLevel, isIntroFinished, isListening, isThinking, sttSupported]);
+  }, [isIntroFinished, isListening, isThinking, sttSupported]);
 
   const toggleMic = () => {
     if (!recognitionRef.current) return;
@@ -419,8 +480,86 @@ function MentorInner() {
     }
   };
 
+  const handleEndChat = () => {
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      // noop
+    }
+    setIsListening(false);
+    setIsIntroFinished(false);
+    setShareStatus("대화를 종료했어요. 필요하면 다시 시작해 주세요.");
+  };
+
   const waveformBars = Array.from({ length: 24 }, (_, i) => i);
   const waveColor = isThinking ? "#c084fc" : "#67e8f9";
+
+  const extractSummaryQuote = (raw: string) => {
+    const trimmed = raw.trim();
+    if (!trimmed) return "";
+    const specialLine = trimmed
+      .split("\n")
+      .map((v) => v.trim())
+      .find((v) => v.startsWith("오늘의 문장:"));
+    if (specialLine) return specialLine.replace("오늘의 문장:", "").trim();
+    return trimmed.split(/[.!?]/)[0]?.trim() ?? trimmed;
+  };
+
+  const handleNativeShare = async () => {
+    // Must be called inside user click handler.
+    if (isSharing) return;
+    setIsSharing(true);
+    setShareStatus("");
+
+    try {
+      let summaryQuote = extractSummaryQuote(mentorText);
+      if (messagesRef.current.length > 1) {
+        const res = await fetch("/api/mentor", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "summary",
+            mentorName: matchedRow?.mentorNameKr ?? selectedMentor.mentorName,
+            personality: mentorPersonality,
+            coreInsight: matchedRow?.mission ?? selectedMentor.coreExperienceInsight,
+            messages: messagesRef.current,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          summaryQuote = extractSummaryQuote(String(data?.summary ?? summaryQuote));
+        }
+      }
+
+      const mentorNameKr = matchedRow?.mentorNameKr ?? selectedMentor.mentorName;
+      const title = `E.M.I.T: ${mentorNameKr}의 위로`;
+      const text = `[${n1} + ${n2}] 조합의 당신을 위한 한마디: ${summaryQuote || "지금의 감정은 이해받을 가치가 있습니다."}`;
+      const url = typeof window !== "undefined" ? window.location.href : "";
+      const sharePayload = { title, text, url };
+
+      const canShareFn = navigator.canShare?.bind(navigator);
+      const canNativeShare = typeof navigator.share === "function";
+      const canPayloadShare = canShareFn ? canShareFn(sharePayload) : true;
+
+      if (canNativeShare && canPayloadShare) {
+        await navigator.share(sharePayload);
+        setShareStatus("공유가 완료되었습니다.");
+      } else {
+        await navigator.clipboard.writeText(`${title}\n${text}\n${url}`);
+        setShareStatus("브라우저 공유를 지원하지 않아 링크를 복사했습니다.");
+      }
+    } catch {
+      try {
+        const fallbackUrl = typeof window !== "undefined" ? window.location.href : "";
+        await navigator.clipboard.writeText(fallbackUrl);
+        setShareStatus("공유가 취소되었거나 실패했습니다. 링크를 복사했습니다.");
+      } catch {
+        setShareStatus("공유에 실패했습니다. 브라우저 권한을 확인해 주세요.");
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-black text-white">
@@ -465,7 +604,7 @@ function MentorInner() {
                       Context
                     </p>
                     <TypingText
-                      text={`${n1}(${c1})와 ${n2}(${c2})가 만나 탄생한 ${selectedMentor.mixedColorResult}의 심리 상태를 분석합니다.`}
+                      text={contextLine}
                       className="mt-1 text-[0.82rem] leading-relaxed text-white/85"
                     />
                   </motion.div>
@@ -526,7 +665,7 @@ function MentorInner() {
                 <button
                   type="button"
                   onClick={() => setIsIntroFinished(true)}
-                  className="rounded-2xl border border-violet-300/30 bg-violet-400/20 px-6 py-3 text-sm font-semibold tracking-[0.06em] text-white shadow-[0_0_24px_rgba(167,139,250,0.45)] transition hover:scale-[1.02] hover:bg-violet-400/30"
+                  className="rounded-2xl border border-violet-200/70 bg-gradient-to-b from-violet-300 to-violet-500 px-6 py-3 text-sm font-semibold tracking-[0.06em] text-[#120822] shadow-[0_8px_30px_rgba(167,139,250,0.65)] transition hover:scale-[1.02] hover:brightness-110"
                 >
                   대화 시작하기
                 </button>
@@ -600,8 +739,26 @@ function MentorInner() {
               <div className="mt-3 flex items-center justify-center gap-3">
                 <button
                   type="button"
+                  onClick={handleEndChat}
+                  className="inline-flex items-center gap-2 rounded-full border border-rose-200/80 bg-rose-100 px-4 py-3 text-sm font-semibold text-rose-900 shadow-[0_6px_20px_rgba(251,113,133,0.35)] transition hover:brightness-105"
+                >
+                  대화 종료
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleNativeShare}
+                  disabled={isSharing}
+                  className="inline-flex items-center gap-2 rounded-full border border-cyan-200/80 bg-cyan-100 px-4 py-3 text-sm font-semibold text-cyan-900 shadow-[0_6px_20px_rgba(103,232,249,0.45)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  <Share2 className="h-4 w-4" />
+                  이 여정 공유하기
+                </button>
+
+                <button
+                  type="button"
                   onClick={toggleMic}
-                  className="h-14 w-14 rounded-full border border-white/30 bg-white/10 text-xl shadow-[0_0_24px_rgba(125,211,252,0.45)] backdrop-blur-md transition hover:scale-105"
+                  className="h-14 w-14 rounded-full border border-violet-200/70 bg-violet-100 text-xl shadow-[0_8px_20px_rgba(167,139,250,0.55)] transition hover:scale-105"
                 >
                   {isListening ? "🎙️" : "🎤"}
                 </button>
@@ -617,6 +774,11 @@ function MentorInner() {
               {(sttError || apiError) && (
                 <p className="mt-1 text-center text-[0.68rem] text-rose-300/90">
                   {sttError ? `STT: ${sttError}` : `API: ${apiError}`}
+                </p>
+              )}
+              {shareStatus && (
+                <p className="mt-1 text-center text-[0.72rem] text-cyan-200/95">
+                  {shareStatus}
                 </p>
               )}
             </motion.section>
