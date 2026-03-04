@@ -218,6 +218,8 @@ function MentorInner() {
   const messagesRef = useRef<Message[]>(messages);
   const transcriptBufferRef = useRef("");
   const interimBufferRef = useRef("");
+  const lastSentTextRef = useRef("");
+  const lastSentAtRef = useRef(0);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -280,13 +282,24 @@ function MentorInner() {
     }
   };
 
+  const resetSpeechBuffers = () => {
+    transcriptBufferRef.current = "";
+    interimBufferRef.current = "";
+    setUserText("");
+  };
+
   const flushTranscriptToApi = async (forcedText?: string) => {
     const text = (forcedText ?? `${transcriptBufferRef.current} ${interimBufferRef.current}`)
       .trim()
       .replace(/\s+/g, " ");
     if (!text || isThinkingRef.current) return;
-    transcriptBufferRef.current = "";
-    interimBufferRef.current = "";
+    if (lastSentTextRef.current === text && Date.now() - lastSentAtRef.current < 2500) {
+      resetSpeechBuffers();
+      return;
+    }
+    lastSentTextRef.current = text;
+    lastSentAtRef.current = Date.now();
+    resetSpeechBuffers();
     setUserText(text);
 
     const nextMessages: Message[] = [...messagesRef.current, { role: "user", content: text }];
@@ -303,7 +316,7 @@ function MentorInner() {
           mentorName: matchedRow?.mentorNameKr ?? selectedMentor.mentorName,
           personality: mentorPersonality,
           coreInsight: matchedRow?.mission ?? selectedMentor.coreExperienceInsight,
-          messages: nextMessages,
+          messages: [],
         }),
       });
 
@@ -482,6 +495,7 @@ function MentorInner() {
       return;
     }
     try {
+      resetSpeechBuffers();
       setLiveModeEnabled(true);
       recognitionRef.current.start();
       setIsListening(true);
@@ -506,6 +520,7 @@ function MentorInner() {
     setIsIntroFinished(true);
     setLiveModeEnabled(true);
     setSttError("");
+    resetSpeechBuffers();
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       setTimeout(() => {
@@ -520,6 +535,19 @@ function MentorInner() {
       setSttError("마이크 권한을 허용해 주세요. 권한이 없으면 STT가 동작하지 않습니다.");
     }
   };
+
+  useEffect(() => {
+    // Chat 화면 진입 시 마이크 권한/인식 시작을 한 번 더 보장.
+    if (!isIntroFinished || !liveModeEnabled || !recognitionRef.current || isListening) return;
+    setTimeout(() => {
+      try {
+        recognitionRef.current?.start();
+        setIsListening(true);
+      } catch {
+        // noop
+      }
+    }, 220);
+  }, [isIntroFinished, liveModeEnabled, isListening]);
 
   const waveformBars = Array.from({ length: 24 }, (_, i) => i);
   const waveColor = isThinking ? "#c084fc" : "#67e8f9";
