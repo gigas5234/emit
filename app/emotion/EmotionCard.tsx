@@ -46,14 +46,16 @@ export function EmotionCard({ emotion, selected, onToggle }: EmotionCardProps) {
           : "border-white/10 bg-black/40 hover:border-purple-200/40 hover:bg-white/5"
       )}
     >
-      <div
-        className="pointer-events-none absolute inset-0 opacity-40 mix-blend-screen"
-        style={{
-          background: `radial-gradient(circle at 0% 0%, ${emotion.color}88, transparent 55%)`,
-        }}
-      />
       {selected && (
-        <div className="pointer-events-none absolute -inset-px rounded-2xl border border-purple-300/80 shadow-[0_0_24px_rgba(167,139,250,0.8)]" />
+        <>
+          <div
+            className="pointer-events-none absolute inset-0 opacity-45 mix-blend-screen"
+            style={{
+              background: `radial-gradient(circle at 0% 0%, ${emotion.color}AA, transparent 55%)`,
+            }}
+          />
+          <div className="pointer-events-none absolute -inset-px rounded-2xl border border-purple-300/80 shadow-[0_0_24px_rgba(167,139,250,0.8)]" />
+        </>
       )}
 
       <div className="relative z-10">

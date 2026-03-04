@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { EmotionCard, Emotion } from "./EmotionCard";
 import { LiquidOrb } from "./LiquidOrb";
 
@@ -69,6 +70,7 @@ const EMOTIONS: Emotion[] = [
 ];
 
 export default function EmotionSelector() {
+  const router = useRouter();
   const [selected, setSelected] = useState<EmotionKey[]>([]);
 
   const handleToggle = (key: EmotionKey) => {
@@ -88,6 +90,24 @@ export default function EmotionSelector() {
     .filter(Boolean) as string[];
 
   const canProceed = selected.length === 2;
+
+  const handleProceed = () => {
+    if (!canProceed) return;
+    const [k1, k2] = selected;
+    const e1 = EMOTIONS.find((e) => e.key === k1);
+    const e2 = EMOTIONS.find((e) => e.key === k2);
+    const n1 = e1?.label.split("·")[0].trim() ?? "감정 A";
+    const n2 = e2?.label.split("·")[0].trim() ?? "감정 B";
+    const c1 = e1?.color ?? "#FF6B9A";
+    const c2 = e2?.color ?? "#7C3AED";
+    const params = new URLSearchParams({
+      c1,
+      c2,
+      n1,
+      n2,
+    });
+    router.push(`/alchemy?${params.toString()}`);
+  };
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-black text-white">
@@ -189,6 +209,7 @@ export default function EmotionSelector() {
                     : "border-white/15 bg-white/5 text-white/60 shadow-none cursor-not-allowed"
                 }
               `}
+              onClick={handleProceed}
             >
               {canProceed
                 ? "이 감정을 이해할 멘토 만나기"
