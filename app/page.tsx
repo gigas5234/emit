@@ -141,33 +141,33 @@ export default function Home() {
     offset: ["start start", "end end"],
   });
 
-  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.28]);
-  const bgBlur = useTransform(scrollYProgress, [0, 1], [0, 10]);
-  const bgDim = useTransform(scrollYProgress, [0, 1], [0.15, 0.55]);
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.18]);
+  const bgBlur = useTransform(scrollYProgress, [0, 1], [0, 6]);
+  const bgDim = useTransform(scrollYProgress, [0, 1], [0.12, 0.45]);
   const bgFilter = useMotionTemplate`blur(${bgBlur}px) saturate(1.15)`;
 
-  const logoRotate = useTransform(scrollYProgress, [0, 1], [0, -720]);
-  const logoScale = useTransform(scrollYProgress, [0, 0.25, 1], [1, 0.98, 0.92]);
+  const logoRotate = useTransform(scrollYProgress, [0, 1], [0, -540]);
+  const logoScale = useTransform(scrollYProgress, [0, 0.3, 1], [1, 0.97, 0.94]);
 
-  const hook1Opacity = useFadeInOut(scrollYProgress, 0.05, 0.12, 0.2);
-  const hook2Opacity = useFadeInOut(scrollYProgress, 0.18, 0.28, 0.4);
+  const hook1Opacity = useTransform(scrollYProgress, [0, 0.1, 0.3], [1, 1, 0]);
+  const hook2Opacity = useFadeInOut(scrollYProgress, 0.18, 0.35, 0.5);
 
-  const mentorOpacity = useFadeInOut(scrollYProgress, 0.38, 0.52, 0.68);
-  const mentorScale = useTransform(scrollYProgress, [0.38, 0.52, 0.68], [1.05, 1, 0.98]);
+  const mentorOpacity = useFadeInOut(scrollYProgress, 0.25, 0.4, 0.6);
+  const mentorScale = useTransform(scrollYProgress, [0.25, 0.4, 0.6], [1.02, 1, 0.98]);
 
-  const mentorTextOpacity = useFadeInOut(scrollYProgress, 0.42, 0.56, 0.7);
+  const mentorTextOpacity = useFadeInOut(scrollYProgress, 0.3, 0.45, 0.65);
 
-  const portalOpacity = useTransform(scrollYProgress, [0.78, 0.92, 1], [0, 0.9, 1]);
-  const portalScale = useTransform(scrollYProgress, [0.78, 1], [0.9, 1.3]);
-  const portalBlur = useTransform(scrollYProgress, [0.78, 1], [8, 0]);
+  const portalOpacity = useTransform(scrollYProgress, [0.6, 0.8, 1], [0, 0.95, 1]);
+  const portalScale = useTransform(scrollYProgress, [0.6, 1], [0.85, 1.25]);
+  const portalBlur = useTransform(scrollYProgress, [0.6, 1], [10, 0]);
   const portalFilter = useMotionTemplate`blur(${portalBlur}px)`;
 
-  const ctaOpacity = useTransform(scrollYProgress, [0.84, 0.92], [0, 1]);
-  const ctaY = useTransform(scrollYProgress, [0.84, 0.92], [18, 0]);
+  const ctaOpacity = useTransform(scrollYProgress, [0.72, 0.86], [0, 1]);
+  const ctaY = useTransform(scrollYProgress, [0.72, 0.86], [20, 0]);
 
   return (
     <main className="relative w-full bg-black text-white">
-      <div ref={containerRef} className="relative h-[520vh] overflow-hidden">
+      <div ref={containerRef} className="relative h-[420vh] overflow-hidden">
         <div className="sticky top-0 h-screen w-full">
           {/* Base background: parallax diving */}
           <motion.div
