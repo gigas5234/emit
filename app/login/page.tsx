@@ -64,20 +64,14 @@ export default function LoginPage() {
             <div className="space-y-2">
               <button
                 type="button"
-                className="group flex w-full items-center justify-center gap-3 rounded-full border border-[#3a3a3a] bg-black/40 px-4 py-2.5 text-sm font-medium text-[#F5F5F5] shadow-[0_10px_24px_rgba(0,0,0,0.6)] transition hover:border-[#FEE500] hover:bg-[#111111] hover:text-[#FEE500] cursor-pointer"
+                className="group flex w-full items-center justify-center gap-2 rounded-full border border-[#3a3a3a] bg-black/40 px-4 py-2.5 text-sm font-medium text-[#F5F5F5] shadow-[0_10px_24px_rgba(0,0,0,0.6)] transition hover:border-[#FEE500] hover:bg-[#FEE500] hover:text-black cursor-pointer"
               >
-                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#FEE500] text-xs font-bold text-black shadow-[0_0_8px_rgba(0,0,0,0.45)]">
-                  말
-                </span>
                 <span className="text-[0.85rem]">카카오로 시작하기</span>
               </button>
               <button
                 type="button"
-                className="group flex w-full items-center justify-center gap-3 rounded-full border border-white/15 bg-black/60 px-4 py-2.5 text-sm font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.65)] transition hover:bg-white hover:text-black cursor-pointer"
+                className="group flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-black/60 px-4 py-2.5 text-sm font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.65)] transition hover:bg-white hover:text-black cursor-pointer"
               >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[0.9rem] font-bold text-[#4285F4] shadow-[0_0_8px_rgba(0,0,0,0.45)]">
-                  G
-                </span>
                 <span className="text-[0.85rem]">Google로 시작하기</span>
               </button>
             </div>
