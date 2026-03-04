@@ -210,8 +210,8 @@ function MentorChatInner() {
   const resetBuffers = () => {
     transcriptBufferRef.current = "";
     interimBufferRef.current = "";
-    sentUpToIndexRef.current = 0;
-    lastResultsLengthRef.current = 0;
+    // NOTE: sentUpToIndexRef is intentionally NOT reset here.
+    // It tracks consumed results across the session and must only reset on session start/stop.
     setUserText("");
   };
 
@@ -367,39 +367,54 @@ function MentorChatInner() {
       setSttError("");
       lastResultsLengthRef.current = event.results.length;
 
-      // Only process results we haven't consumed yet (sentUpToIndexRef)
-      // This prevents Chrome's cumulative event.results from re-sending old text
-      let finalText = "";
-      let interimText = "";
+      // Pass 1: consume any NEW final results (advance sentUpToIndexRef as we go)
+      // Finals are the source of truth — accumulate them into transcriptBufferRef
       for (let i = sentUpToIndexRef.current; i < event.results.length; i += 1) {
-        const result = event.results[i];
-        const chunk = result[0]?.transcript ?? "";
-        const conf = result[0]?.confidence != null
-          ? ` (${(result[0].confidence * 100).toFixed(0)}%)`
-          : "";
-        if (result.isFinal) {
-          finalText += (finalText ? " " : "") + chunk;
-          addLogRef.current?.("ok", `✅ 최종: "${chunk}"${conf}`);
-        } else {
-          interimText = chunk; // Latest interim replaces previous (no accumulation)
-          addLogRef.current?.("info", `⏳ 중간: "${chunk}"`);
+        if (event.results[i].isFinal) {
+          const chunk = (event.results[i][0]?.transcript ?? "").trim();
+          const conf = event.results[i][0]?.confidence != null
+            ? ` (${(event.results[i][0].confidence * 100).toFixed(0)}%)`
+            : "";
+          if (chunk) {
+            transcriptBufferRef.current = transcriptBufferRef.current
+              ? `${transcriptBufferRef.current} ${chunk}`
+              : chunk;
+            addLogRef.current?.("ok", `✅ 최종: "${chunk}"${conf}`);
+          }
+          sentUpToIndexRef.current = i + 1; // mark this result as consumed
         }
       }
 
-      // REPLACE buffers (not accumulate) — rebuild fresh from sentUpToIndex each time
-      transcriptBufferRef.current = finalText;
-      interimBufferRef.current = interimText;
+      // Pass 2: get the current interim result (latest non-final, for display only)
+      // Interim is NEVER sent — it's only shown so the user gets real-time feedback
+      let interimText = "";
+      if (event.results.length > sentUpToIndexRef.current) {
+        const last = event.results[event.results.length - 1];
+        if (!last.isFinal) {
+          interimText = (last[0]?.transcript ?? "").trim();
+          interimBufferRef.current = interimText;
+          if (interimText) addLogRef.current?.("info", `⏳ 중간(표시용): "${interimText}"`);
+        }
+      } else {
+        interimBufferRef.current = "";
+      }
 
-      const fullText = `${finalText} ${interimText}`.trim().replace(/\s+/g, " ");
-      if (fullText) setUserText(fullText);
+      // Display = accumulated finals + current interim
+      const displayText = [transcriptBufferRef.current, interimText]
+        .filter(Boolean).join(" ").replace(/\s+/g, " ");
+      if (displayText) setUserText(displayText);
 
-      if (fullText) {
+      // Silence timer: reset on every result, fires only after the user stops speaking
+      if (displayText) {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
-          addLogRef.current?.("info", `⏱ 침묵 1.5초 → API 전송: "${fullText}"`);
-          // Advance the consumed index before sending
+          const toSend = [transcriptBufferRef.current, interimBufferRef.current]
+            .filter(Boolean).join(" ").replace(/\s+/g, " ");
+          if (!toSend) return;
+          addLogRef.current?.("info", `⏱ 침묵 감지 → API 전송: "${toSend}"`);
+          // Consume the interim result index too so it's not re-processed
           sentUpToIndexRef.current = lastResultsLengthRef.current;
-          sendSpeechRef.current?.(fullText);
+          sendSpeechRef.current?.(toSend);
           transcriptBufferRef.current = "";
           interimBufferRef.current = "";
         }, 1500);
@@ -470,6 +485,9 @@ function MentorChatInner() {
       return;
     }
     shouldListenRef.current = true;
+    // Reset session-level index on new mic session
+    sentUpToIndexRef.current = 0;
+    lastResultsLengthRef.current = 0;
     resetBuffers();
     try {
       recognitionRef.current.start();
@@ -485,6 +503,9 @@ function MentorChatInner() {
     shouldListenRef.current = false;
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     setSpeechDetected(false);
+    // Reset index when session ends
+    sentUpToIndexRef.current = 0;
+    lastResultsLengthRef.current = 0;
     try {
       recognitionRef.current.stop();
       addLogRef.current?.("info", "■ recognition.stop() 호출됨");
