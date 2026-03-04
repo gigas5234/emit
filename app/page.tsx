@@ -7,7 +7,10 @@ import {
   useTransform,
   AnimatePresence,
 } from "framer-motion";
-import { useEffect, useState, MouseEvent } from "react";
+import { useEffect, useState, PointerEvent } from "react";
+
+import backImg from "../asset/01.back_img.png";
+import logoImg from "../asset/00.logo.png";
 
 const mainPhrases = [
   "지금 어떤 감정을 느끼고 계신가요?",
@@ -65,7 +68,7 @@ export default function Home() {
     return () => window.removeEventListener("deviceorientation", handler);
   }, [mvX, mvY]);
 
-  const handlePointerMove = (e: MouseEvent<HTMLDivElement>) => {
+  const handlePointerMove = (e: PointerEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
@@ -90,7 +93,7 @@ export default function Home() {
         style={{ x: bgX, y: bgY }}
       >
         <Image
-          src="/01.back_img.png"
+          src={backImg}
           alt="Cosmic background"
           fill
           priority
@@ -118,7 +121,7 @@ export default function Home() {
             <div className="relative h-40 w-40 rounded-full bg-gradient-to-b from-white/40 to-white/5 p-[2px] shadow-[0_0_40px_rgba(147,51,234,0.75)] sm:h-52 sm:w-52">
               <div className="relative h-full w-full overflow-hidden rounded-full bg-black/60">
                 <Image
-                  src="/00.logo.png"
+                  src={logoImg}
                   alt="E.M.I.T Logo"
                   fill
                   className="object-cover"

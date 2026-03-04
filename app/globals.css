@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+/* nicer tap highlights on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
