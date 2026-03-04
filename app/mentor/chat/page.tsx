@@ -119,6 +119,9 @@ function MentorChatInner() {
   const isThinkingRef = useRef(false);
   const lastSentTextRef = useRef("");
   const lastSentAtRef = useRef(0);
+  const messagesRef = useRef<Message[]>([]);
+  const shouldListenRef = useRef(false);
+  const sendSpeechRef = useRef<((forced?: string) => Promise<void>) | null>(null);
 
   useEffect(() => {
     fetch("/mentors.csv")
@@ -178,6 +181,10 @@ function MentorChatInner() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.sessionStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(messages));
+  }, [messages]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
   }, [messages]);
 
   useEffect(() => {
@@ -276,7 +283,7 @@ function MentorChatInner() {
           mission:
             matchedRow?.mission ??
             "이번 대화에서 감정의 원인을 구조적으로 이해하고 다음 행동을 설계합니다.",
-          messages: [],
+          messages: messagesRef.current,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -296,6 +303,9 @@ function MentorChatInner() {
     }
   };
 
+  // Always keep sendSpeechRef pointing to the latest sendCurrentSpeech
+  sendSpeechRef.current = sendCurrentSpeech;
+
   useEffect(() => {
     const anyWindow = window as any;
     const SpeechRecognition = anyWindow.SpeechRecognition || anyWindow.webkitSpeechRecognition;
@@ -307,6 +317,7 @@ function MentorChatInner() {
     recognition.lang = "ko-KR";
     recognition.continuous = true;
     recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
 
     recognition.onresult = (event: any) => {
       setSttError("");
@@ -332,7 +343,7 @@ function MentorChatInner() {
       if (currentFullText) {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
-          sendCurrentSpeech(currentFullText);
+          sendSpeechRef.current?.(currentFullText);
           transcriptBufferRef.current = "";
           interimBufferRef.current = "";
         }, 1500);
@@ -341,40 +352,75 @@ function MentorChatInner() {
 
     recognition.onerror = (event: any) => {
       const err = String(event?.error ?? "음성 인식 오류");
-      if (err !== "aborted") setSttError(err);
+      // aborted / no-speech are non-fatal — auto-restart if user still wants to listen
+      if (err === "aborted" || err === "no-speech") {
+        if (shouldListenRef.current) {
+          setTimeout(() => {
+            if (shouldListenRef.current) {
+              try { recognition.start(); } catch { /* noop */ }
+            }
+          }, 300);
+        }
+        return;
+      }
+      setSttError(err);
       setIsListening(false);
+      shouldListenRef.current = false;
     };
 
     recognition.onend = () => {
-      setIsListening(false);
       const pending = `${transcriptBufferRef.current} ${interimBufferRef.current}`.trim();
-      if (pending && !isThinkingRef.current) sendCurrentSpeech(pending);
+      if (pending && !isThinkingRef.current) sendSpeechRef.current?.(pending);
+
+      // Auto-restart recognition if user still wants to be listening
+      if (shouldListenRef.current) {
+        setTimeout(() => {
+          if (shouldListenRef.current) {
+            try {
+              recognition.start();
+            } catch {
+              // noop
+            }
+          }
+        }, 300);
+      } else {
+        setIsListening(false);
+      }
     };
 
     recognitionRef.current = recognition;
     return () => {
+      shouldListenRef.current = false;
       try {
-        recognition.stop();
+        recognition.abort();
       } catch {
         // noop
       }
     };
-  }, [matchedRow, selectedMentor, n1, n2, mentorPersonality]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startListening = () => {
     if (!recognitionRef.current) return;
+    shouldListenRef.current = true;
+    resetBuffers();
     try {
-      resetBuffers();
       recognitionRef.current.start();
       setIsListening(true);
     } catch {
-      // noop
+      // already started — that's fine
     }
   };
 
   const stopListening = () => {
     if (!recognitionRef.current) return;
-    recognitionRef.current.stop();
+    shouldListenRef.current = false;
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    try {
+      recognitionRef.current.stop();
+    } catch {
+      // noop
+    }
     setIsListening(false);
   };
 
