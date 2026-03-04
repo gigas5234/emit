@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/gigas5234/emit#readme",
   "dependencies": {
+    "clsx": "^2.1.1",
     "framer-motion": "^12.34.5",
     "lucide-react": "^0.577.0",
     "next": "^16.1.6",

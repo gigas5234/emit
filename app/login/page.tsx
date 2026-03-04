@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
   return (
     <main className="flex min-h-screen items-center justify-center bg-black text-white">
       <div className="w-full max-w-md px-6">
@@ -16,7 +18,13 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.9)] backdrop-blur-md sm:p-7">
-          <form className="space-y-4">
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              router.push("/emotion");
+            }}
+          >
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
