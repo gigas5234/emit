@@ -103,18 +103,14 @@ export default function SharePage({
               </p>
 
               <div className="mt-4 flex justify-center">
-                <div className="relative h-44 w-36 overflow-hidden rounded-2xl">
-                  <Image
-                    src={getMentorImage(data.mentorId)}
-                    alt="Mentor"
-                    fill
-                    sizes="144px"
-                    style={{
-                      objectFit: "cover",
-                      objectPosition: "center 5%",
-                    }}
-                  />
-                </div>
+                <Image
+                  src={getMentorImage(data.mentorId)}
+                  alt="Mentor"
+                  width={160}
+                  height={180}
+                  className="h-36 w-auto"
+                  style={{ objectFit: "contain" }}
+                />
               </div>
 
               <p className="mt-3 text-sm font-semibold text-white/80">

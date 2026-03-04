@@ -174,19 +174,15 @@ function MentorIntroInner() {
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
             >
-              <div className="relative h-72 w-52 overflow-hidden rounded-3xl sm:h-80 sm:w-60">
-                <Image
-                  src={getMentorImage(matchedRow?.id)}
-                  alt="Mentor figure"
-                  fill
-                  priority
-                  sizes="(max-width: 640px) 208px, 240px"
-                  style={{
-                    objectFit: "cover",
-                    objectPosition: "center 5%",
-                  }}
-                />
-              </div>
+              <Image
+                src={getMentorImage(matchedRow?.id)}
+                alt="Mentor figure"
+                width={280}
+                height={320}
+                priority
+                className="h-64 w-auto sm:h-80"
+                style={{ objectFit: "contain" }}
+              />
             </motion.div>
           </div>
 

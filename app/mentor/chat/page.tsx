@@ -590,19 +590,15 @@ function MentorChatInner() {
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
-              <div className="relative h-60 w-44 overflow-hidden rounded-3xl sm:h-72 sm:w-52">
-                <Image
-                  src={getMentorImage(matchedRow?.id)}
-                  alt="Mentor figure"
-                  fill
-                  priority
-                  sizes="(max-width: 640px) 176px, 208px"
-                  style={{
-                    objectFit: "cover",
-                    objectPosition: "center 5%",
-                  }}
-                />
-              </div>
+              <Image
+                src={getMentorImage(matchedRow?.id)}
+                alt="Mentor figure"
+                width={280}
+                height={320}
+                priority
+                className="h-56 w-auto sm:h-64"
+                style={{ objectFit: "contain" }}
+              />
             </motion.div>
           </div>
         </div>
