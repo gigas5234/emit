@@ -12,6 +12,7 @@ type SpeechRecognitionType =
   | null;
 
 type Message = { role: "user" | "assistant"; content: string };
+type DebugLog = { time: string; type: "info" | "ok" | "warn" | "err"; msg: string };
 
 type MentorCsvRow = {
   color1: string;
@@ -106,6 +107,8 @@ function MentorChatInner() {
   const [sttError, setSttError] = useState("");
   const [apiError, setApiError] = useState("");
   const [audioLevel, setAudioLevel] = useState(0);
+  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognitionType>(null);
   const transcriptBufferRef = useRef("");
@@ -122,6 +125,7 @@ function MentorChatInner() {
   const messagesRef = useRef<Message[]>([]);
   const shouldListenRef = useRef(false);
   const sendSpeechRef = useRef<((forced?: string) => Promise<void>) | null>(null);
+  const addLogRef = useRef<((type: DebugLog["type"], msg: string) => void) | null>(null);
 
   useEffect(() => {
     fetch("/mentors.csv")
@@ -202,8 +206,10 @@ function MentorChatInner() {
     let mounted = true;
     const setupAudio = async () => {
       try {
+        addLogRef.current?.("info", "마이크 권한 요청 중...");
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         if (!mounted) return;
+        addLogRef.current?.("ok", "마이크 권한 허용됨 ✓");
         mediaStreamRef.current = stream;
         const ctx = new AudioContext();
         const analyser = ctx.createAnalyser();
@@ -228,7 +234,9 @@ function MentorChatInner() {
           rafRef.current = requestAnimationFrame(tick);
         };
         tick();
-      } catch {
+      } catch (e: any) {
+        const msg = e?.message ?? "알 수 없는 오류";
+        addLogRef.current?.("err", `마이크 권한 거부: ${msg}`);
         setSttError("마이크 권한이 필요합니다.");
       }
     };
@@ -253,11 +261,20 @@ function MentorChatInner() {
     const text = (forced ?? `${transcriptBufferRef.current} ${interimBufferRef.current}`)
       .trim()
       .replace(/\s+/g, " ");
-    if (!text || isThinkingRef.current) return;
+    if (!text) {
+      addLogRef.current?.("warn", "sendCurrentSpeech: 텍스트 없음 — 전송 건너뜀");
+      return;
+    }
+    if (isThinkingRef.current) {
+      addLogRef.current?.("warn", "sendCurrentSpeech: AI 응답 중 — 전송 대기");
+      return;
+    }
     if (lastSentTextRef.current === text && Date.now() - lastSentAtRef.current < 2500) {
+      addLogRef.current?.("warn", `sendCurrentSpeech: 중복 전송 방지 ("${text}")`);
       resetBuffers();
       return;
     }
+    addLogRef.current?.("info", `📤 API 전송: "${text}" (히스토리 ${messagesRef.current.length}개)`);
     lastSentTextRef.current = text;
     lastSentAtRef.current = Date.now();
     resetBuffers();
@@ -288,14 +305,19 @@ function MentorChatInner() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setApiError(String(data?.error ?? `HTTP ${res.status}`));
+        const errMsg = String(data?.error ?? `HTTP ${res.status}`);
+        addLogRef.current?.("err", `API 오류 ${res.status}: ${errMsg}`);
+        setApiError(errMsg);
         setMentorText("잠시 연결이 불안정합니다. 다시 한 번 말씀해 주시겠어요?");
       } else {
         const reply = String(data?.reply ?? "").trim();
+        addLogRef.current?.("ok", `📥 AI 응답 수신 (${reply.length}자)`);
         setMentorText(reply || "말씀 감사합니다. 지금 감정의 결을 더 함께 살펴보겠습니다.");
         setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
       }
-    } catch {
+    } catch (e: any) {
+      const msg = e?.message ?? "알 수 없는 오류";
+      addLogRef.current?.("err", `네트워크 오류: ${msg}`);
       setApiError("네트워크 오류 또는 API 연결 실패");
       setMentorText("연결이 잠시 끊겼습니다. 다시 한 번 말씀해 주시면 이어가겠습니다.");
     } finally {
@@ -303,8 +325,17 @@ function MentorChatInner() {
     }
   };
 
-  // Always keep sendSpeechRef pointing to the latest sendCurrentSpeech
+  // Always keep refs pointing to the latest functions
   sendSpeechRef.current = sendCurrentSpeech;
+  addLogRef.current = (type: DebugLog["type"], msg: string) => {
+    const time = new Date().toLocaleTimeString("ko-KR", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    setDebugLogs((prev) => [...prev.slice(-29), { time, type, msg }]);
+  };
 
   useEffect(() => {
     const anyWindow = window as any;
@@ -319,6 +350,24 @@ function MentorChatInner() {
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
+    addLogRef.current?.("ok", "SpeechRecognition 객체 생성 완료 (ko-KR)");
+
+    recognition.onstart = () => {
+      addLogRef.current?.("ok", "▶ recognition.onstart — 인식 시작됨");
+    };
+
+    recognition.onspeechstart = () => {
+      addLogRef.current?.("info", "🎤 음성 감지 시작");
+    };
+
+    recognition.onspeechend = () => {
+      addLogRef.current?.("info", "🔇 음성 입력 종료");
+    };
+
+    recognition.onnomatch = () => {
+      addLogRef.current?.("warn", "⚠ onnomatch — 인식 가능한 발화 없음");
+    };
+
     recognition.onresult = (event: any) => {
       setSttError("");
       let finalTranscript = "";
@@ -326,10 +375,15 @@ function MentorChatInner() {
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
         const result = event.results[i];
         const chunk = result[0]?.transcript ?? "";
+        const conf = result[0]?.confidence != null
+          ? ` (신뢰도 ${(result[0].confidence * 100).toFixed(0)}%)`
+          : "";
         if (result.isFinal) {
           finalTranscript += chunk;
+          addLogRef.current?.("ok", `✅ 최종 인식: "${chunk}"${conf}`);
         } else {
           interimTranscript += chunk;
+          addLogRef.current?.("info", `⏳ 중간 인식: "${chunk}"`);
         }
       }
       transcriptBufferRef.current = `${transcriptBufferRef.current} ${finalTranscript}`.trim();
@@ -343,6 +397,7 @@ function MentorChatInner() {
       if (currentFullText) {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
+          addLogRef.current?.("info", `⏱ 침묵 1.5초 → API 전송: "${currentFullText}"`);
           sendSpeechRef.current?.(currentFullText);
           transcriptBufferRef.current = "";
           interimBufferRef.current = "";
@@ -354,6 +409,7 @@ function MentorChatInner() {
       const err = String(event?.error ?? "음성 인식 오류");
       // aborted / no-speech are non-fatal — auto-restart if user still wants to listen
       if (err === "aborted" || err === "no-speech") {
+        addLogRef.current?.("warn", `⚠ onerror(${err}) — 자동 재시작 시도`);
         if (shouldListenRef.current) {
           setTimeout(() => {
             if (shouldListenRef.current) {
@@ -363,6 +419,7 @@ function MentorChatInner() {
         }
         return;
       }
+      addLogRef.current?.("err", `❌ onerror: ${err}`);
       setSttError(err);
       setIsListening(false);
       shouldListenRef.current = false;
@@ -370,6 +427,7 @@ function MentorChatInner() {
 
     recognition.onend = () => {
       const pending = `${transcriptBufferRef.current} ${interimBufferRef.current}`.trim();
+      addLogRef.current?.("warn", `■ onend — 미전송 텍스트: "${pending || "(없음)"}", shouldListen=${shouldListenRef.current}`);
       if (pending && !isThinkingRef.current) sendSpeechRef.current?.(pending);
 
       // Auto-restart recognition if user still wants to be listening
@@ -378,6 +436,7 @@ function MentorChatInner() {
           if (shouldListenRef.current) {
             try {
               recognition.start();
+              addLogRef.current?.("info", "↺ recognition 재시작");
             } catch {
               // noop
             }
@@ -401,14 +460,18 @@ function MentorChatInner() {
   }, []);
 
   const startListening = () => {
-    if (!recognitionRef.current) return;
+    if (!recognitionRef.current) {
+      addLogRef.current?.("err", "❌ startListening: recognitionRef가 null");
+      return;
+    }
     shouldListenRef.current = true;
     resetBuffers();
     try {
       recognitionRef.current.start();
       setIsListening(true);
-    } catch {
-      // already started — that's fine
+      addLogRef.current?.("info", "▶ recognition.start() 호출됨");
+    } catch (e: any) {
+      addLogRef.current?.("warn", `start() 예외: ${e?.message ?? e} (이미 시작 중일 수 있음)`);
     }
   };
 
@@ -418,6 +481,7 @@ function MentorChatInner() {
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     try {
       recognitionRef.current.stop();
+      addLogRef.current?.("info", "■ recognition.stop() 호출됨");
     } catch {
       // noop
     }
@@ -629,12 +693,59 @@ function MentorChatInner() {
         </p>
         {(sttError || apiError) && (
           <p className="mt-1 text-center text-[0.68rem] text-rose-300/90">
-            {sttError ? `STT: ${sttError}` : `API: ${apiError}`}
+            {sttError
+              ? `STT 오류: ${sttError === "not-allowed" ? "마이크 권한이 거부됨 (브라우저 설정 확인)" : sttError === "network" ? "네트워크 오류 — 인터넷 연결 확인" : sttError === "service-not-allowed" ? "이 브라우저/환경에서 STT가 비허용됨 (HTTP는 불가, HTTPS 필요)" : sttError}`
+              : `API 오류: ${apiError}`}
           </p>
         )}
         {shareStatus && (
           <p className="mt-1 text-center text-[0.72rem] text-cyan-200/95">{shareStatus}</p>
         )}
+
+        {/* Debug Panel */}
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setShowDebug((v) => !v)}
+            className="mx-auto flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[0.6rem] text-white/40 transition hover:bg-white/10 hover:text-white/60"
+          >
+            🐛 진단 로그 {showDebug ? "닫기" : `열기 (${debugLogs.length})`}
+          </button>
+          {showDebug && (
+            <div className="mt-2 max-h-48 overflow-y-auto rounded-2xl border border-white/10 bg-black/70 p-3 backdrop-blur-md">
+              {debugLogs.length === 0 ? (
+                <p className="text-center font-mono text-[0.6rem] text-white/30">로그 없음 — 마이크 버튼을 눌러보세요</p>
+              ) : (
+                <div className="flex flex-col gap-0.5 font-mono text-[0.58rem]">
+                  {debugLogs.map((log, i) => (
+                    <div key={i} className="flex gap-1.5">
+                      <span className="shrink-0 text-white/30">{log.time}</span>
+                      <span
+                        className={
+                          log.type === "ok" ? "text-emerald-300/90" :
+                          log.type === "err" ? "text-rose-300/90" :
+                          log.type === "warn" ? "text-amber-300/80" :
+                          "text-cyan-200/70"
+                        }
+                      >
+                        {log.msg}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {debugLogs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setDebugLogs([])}
+                  className="mt-2 w-full rounded-full border border-white/10 py-0.5 text-[0.55rem] text-white/25 hover:text-white/50"
+                >
+                  로그 지우기
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );
