@@ -170,6 +170,11 @@ function MentorChatInner() {
   const shouldListenRef = useRef(false);
   const sendSpeechRef = useRef<((forced?: string) => Promise<void>) | null>(null);
   const addLogRef = useRef<((type: DebugLog["type"], msg: string) => void) | null>(null);
+  // Rapid-restart guard: if onend fires too quickly without speech, stop the loop
+  const lastStartAtRef = useRef(0);
+  const rapidRestartCountRef = useRef(0);
+  // iOS flag: continuous mode doesn't work; each tap = one utterance
+  const isIOSRef = useRef(false);
 
   useEffect(() => {
     fetch("/mentors.csv")
@@ -346,9 +351,14 @@ function MentorChatInner() {
       setSttError("현재 브라우저가 Web Speech API를 지원하지 않습니다.");
       return;
     }
+
+    // iOS (iPhone / iPad / iPod) doesn't support continuous mode — sessions end immediately
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    isIOSRef.current = isIOS;
+
     const recognition: SpeechRecognitionType = new SpeechRecognition();
     recognition.lang = "ko-KR";
-    recognition.continuous = true;
+    recognition.continuous = !isIOS; // false on iOS: one-shot per tap
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
@@ -462,19 +472,47 @@ function MentorChatInner() {
         lastTranscriptRef.current = "";
       }
 
-      if (shouldListenRef.current) {
-        setTimeout(() => {
-          if (shouldListenRef.current) {
-            try {
-              recognition.start();
-              addLogRef.current?.("info", "↺ recognition 재시작");
-            } catch { /* noop */ }
-          }
-        }, 300);
-      } else {
+      if (!shouldListenRef.current) {
         setSpeechDetected(false);
         setIsListening(false);
+        return;
       }
+
+      // iOS: continuous mode unsupported — don't auto-restart; user taps mic again per utterance
+      if (isIOSRef.current) {
+        shouldListenRef.current = false;
+        setSpeechDetected(false);
+        setIsListening(false);
+        addLogRef.current?.("info", "iOS — 한 발화 완료, 마이크 버튼을 다시 눌러주세요");
+        return;
+      }
+
+      // Rapid-restart guard: if onend fires < 800ms after start() with no speech, count it
+      const elapsed = Date.now() - lastStartAtRef.current;
+      if (elapsed < 800 && !pending) {
+        rapidRestartCountRef.current += 1;
+        addLogRef.current?.("warn", `⚠ 빠른 종료 감지 (${elapsed}ms) — count=${rapidRestartCountRef.current}`);
+        if (rapidRestartCountRef.current >= 4) {
+          shouldListenRef.current = false;
+          setSpeechDetected(false);
+          setIsListening(false);
+          setSttError("음성 인식이 이 환경에서 지원되지 않습니다. Safari 또는 Chrome(Android)을 이용해 주세요.");
+          addLogRef.current?.("err", "❌ 빠른 재시작 4회 — STT 지원 불가 환경으로 판단, 중단");
+          return;
+        }
+      } else {
+        rapidRestartCountRef.current = 0; // reset on successful session
+      }
+
+      setTimeout(() => {
+        if (shouldListenRef.current) {
+          try {
+            recognition.start();
+            lastStartAtRef.current = Date.now();
+            addLogRef.current?.("info", "↺ recognition 재시작");
+          } catch { /* noop */ }
+        }
+      }, 300);
     };
 
     recognitionRef.current = recognition;
@@ -495,8 +533,10 @@ function MentorChatInner() {
       return;
     }
     shouldListenRef.current = true;
+    rapidRestartCountRef.current = 0; // reset guard on fresh user-initiated start
     resetBuffers();
     try {
+      lastStartAtRef.current = Date.now();
       recognitionRef.current.start();
       setIsListening(true);
       addLogRef.current?.("info", "▶ recognition.start() 호출됨");
@@ -791,9 +831,11 @@ function MentorChatInner() {
             {isThinking
               ? <span className="text-violet-300/75">멘토가 응답을 준비하고 있습니다...</span>
               : isListening
-              ? "음성 감지 중... 잠시 멈추면 자동으로 전달됩니다."
+              ? "음성 감지 중... 말을 마치면 자동으로 전달됩니다."
               : micPermission === "checking"
               ? "마이크 권한 확인 중..."
+              : isIOSRef.current
+              ? "버튼을 누르고 말씀하세요. 말을 마친 후 버튼을 다시 눌러주세요."
               : "마이크 버튼을 눌러 대화를 시작하세요."}
           </p>
         )}
