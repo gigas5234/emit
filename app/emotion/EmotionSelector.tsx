@@ -230,7 +230,7 @@ export default function EmotionSelector() {
               onClick={handleProceed}
             >
               {canProceed
-                ? "이 감정을 이해할 멘토 만나기"
+                ? "이 감정을 이해해주는 멘토 찾기"
                 : "감정을 두 가지 선택해 주세요"}
             </motion.button>
           </section>

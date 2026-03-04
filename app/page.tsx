@@ -32,10 +32,10 @@ const ORB_BLOBS = [
 
 /* ─── Orbital letter config ───────────────────────────────────────── */
 const ORBIT_CFG = [
-  { char: "E", rx: 162, ry: 55, period: 8600,  phase: 0.1,         tilt: -0.18 },
-  { char: "M", rx: 130, ry: 76, period: 11400, phase: Math.PI * 0.55, tilt: 0.22 },
-  { char: "I", rx: 178, ry: 46, period: 7100,  phase: Math.PI * 1.05, tilt: -0.12 },
-  { char: "T", rx: 148, ry: 72, period: 13200, phase: Math.PI * 1.62, tilt: 0.26 },
+  { char: "E", rx: 162, ry: 55, period: 8600,  phase: 0.1,           tilt: -0.18, condenseDelay: 0    },
+  { char: "M", rx: 130, ry: 76, period: 11400, phase: Math.PI * 0.55, tilt: 0.22,  condenseDelay: 0.09 },
+  { char: "I", rx: 178, ry: 46, period: 7100,  phase: Math.PI * 1.05, tilt: -0.12, condenseDelay: 0.18 },
+  { char: "T", rx: 148, ry: 72, period: 13200, phase: Math.PI * 1.62, tilt: 0.26,  condenseDelay: 0.27 },
 ];
 
 /* ─── Starfield ───────────────────────────────────────────────────── */
@@ -57,7 +57,7 @@ function useStars(count: number) {
 
 /* ─── Orbiting letter ─────────────────────────────────────────────── */
 function OrbitalLetter({
-  char, rx, ry, period, phase, tilt, condensed,
+  char, rx, ry, period, phase, tilt, condensed, condenseDelay,
 }: (typeof ORBIT_CFG)[0] & { condensed: boolean }) {
   const xMV      = useMotionValue(rx * Math.cos(phase));
   const yMV      = useMotionValue(ry * Math.sin(phase));
@@ -70,10 +70,10 @@ function OrbitalLetter({
   useEffect(() => {
     if (condensed) {
       if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-      animate(xMV,       0,   { duration: 0.38, ease: [0.55, 0, 1, 1] });
-      animate(yMV,       0,   { duration: 0.38, ease: [0.55, 0, 1, 1] });
-      animate(scaleMV,   0,   { duration: 0.32, ease: "easeIn" });
-      animate(opacityMV, 0,   { duration: 0.25 });
+      animate(xMV,       0, { duration: 0.34, ease: [0.65, 0, 1, 1], delay: condenseDelay });
+      animate(yMV,       0, { duration: 0.34, ease: [0.65, 0, 1, 1], delay: condenseDelay });
+      animate(scaleMV,   0, { duration: 0.28, ease: "easeIn",         delay: condenseDelay });
+      animate(opacityMV, 0, { duration: 0.22,                         delay: condenseDelay });
       return;
     }
     animate(scaleMV,   1,    { duration: 0.45 });
@@ -159,7 +159,7 @@ export default function Home() {
     setCondensed(true);
     setIsStarting(true);
 
-    await sleep(420);        // condensation complete
+    await sleep(640);        // E→M→I→T sequential condensation complete (last at 0.27s + 0.34s ≈ 620ms)
     setOrbBurst(true);       // orb shrinks + supernova
 
     await sleep(460);        // supernova peak
@@ -194,9 +194,9 @@ export default function Home() {
       <svg className="pointer-events-none absolute h-0 w-0" aria-hidden="true">
         <defs>
           <filter id="goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
             <feColorMatrix in="blur" mode="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" />
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" />
           </filter>
         </defs>
       </svg>
@@ -264,9 +264,9 @@ export default function Home() {
                   width: `${b.w}%`, height: `${b.h}%`,
                   marginLeft: `-${b.w / 2}%`, marginTop: `-${b.h / 2}%`,
                   background: b.color,
-                  filter: "blur(18px)",
+                  filter: "blur(14px)",
                   mixBlendMode: "screen",
-                  opacity: 0.72,
+                  opacity: 0.9,
                 }}
                 animate={orbBurst
                   ? { scale: 2.5, opacity: 0 }
@@ -284,17 +284,17 @@ export default function Home() {
               />
             ))}
 
-            {/* White core pulse */}
+            {/* Tiny center glint — very small so it doesn't wash out colors */}
             <motion.div
-              className="absolute inset-0 rounded-full"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[18%] w-[18%] rounded-full"
               style={{
                 background:
-                  "radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(200,170,255,0.14) 45%, transparent 70%)",
+                  "radial-gradient(circle, rgba(255,255,255,0.55) 0%, rgba(220,200,255,0.18) 55%, transparent 100%)",
               }}
-              animate={orbBurst ? { scale: 3, opacity: 0 } : { scale: [0.82, 1.08, 0.82] }}
+              animate={orbBurst ? { scale: 5, opacity: 0 } : { scale: [0.85, 1.15, 0.85] }}
               transition={orbBurst
-                ? { duration: 0.32, ease: "easeOut" }
-                : { duration: 3.6, repeat: Infinity, ease: "easeInOut" }
+                ? { duration: 0.28, ease: "easeOut" }
+                : { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
               }
             />
           </motion.div>
