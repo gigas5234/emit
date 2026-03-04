@@ -73,6 +73,39 @@ function parseMentorsCsv(csv: string): MentorCsvRow[] {
   });
 }
 
+// Static map — resolved from URL params instantly (no CSV wait)
+const COLOR_PAIR_TO_IMAGE: Record<string, string> = {
+  "Red_Blue": "/mentors/01.png",
+  "Red_Yellow": "/mentors/02.png",
+  "Red_Purple": "/mentors/03.png",
+  "Red_Gray": "/mentors/04.png",
+  "Red_Green": "/mentors/05.png",
+  "Red_Orange": "/mentors/06.png",
+  "Red_Navy": "/mentors/07.png",
+  "Blue_Yellow": "/mentors/08.png",
+  "Blue_Purple": "/mentors/09.png",
+  "Blue_Gray": "/mentors/10.png",
+  "Blue_Green": "/mentors/11.png",
+  "Blue_Orange": "/mentors/12.png",
+  "Blue_Navy": "/mentors/13.png",
+  "Yellow_Purple": "/mentors/14.png",
+  "Yellow_Gray": "/mentors/15.png",
+  "Yellow_Green": "/mentors/16.png",
+  "Yellow_Orange": "/mentors/17.png",
+  "Yellow_Navy": "/mentors/18.png",
+  "Purple_Gray": "/mentors/19.png",
+  "Purple_Green": "/mentors/20.png",
+  "Purple_Orange": "/mentors/21.png",
+};
+
+function getMentorImageFromColors(a: string, b: string): string {
+  return (
+    COLOR_PAIR_TO_IMAGE[`${a}_${b}`] ??
+    COLOR_PAIR_TO_IMAGE[`${b}_${a}`] ??
+    "/mentors/sample.png"
+  );
+}
+
 function getMentorImage(id: string | undefined): string {
   if (!id) return "/mentors/sample.png";
   const num = parseInt(id, 10);
@@ -89,6 +122,9 @@ function MentorIntroInner() {
   const n2 = params.get("n2") ?? "감정 B";
   const m1 = (params.get("m1") as MentorColor) ?? "Purple";
   const m2 = (params.get("m2") as MentorColor) ?? "Blue";
+
+  // Resolved immediately from URL — no CSV loading delay
+  const instantImageSrc = getMentorImageFromColors(m1, m2);
 
   const [mentorRows, setMentorRows] = useState<MentorCsvRow[]>([]);
 
@@ -174,15 +210,15 @@ function MentorIntroInner() {
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Image
-                src={getMentorImage(matchedRow?.id)}
-                alt="Mentor figure"
-                width={280}
-                height={320}
-                priority
-                className="h-64 w-auto sm:h-80"
-                style={{ objectFit: "contain" }}
-              />
+                <Image
+                  src={instantImageSrc}
+                  alt="Mentor figure"
+                  width={280}
+                  height={320}
+                  priority
+                  className="h-64 w-auto sm:h-80"
+                  style={{ objectFit: "contain" }}
+                />
             </motion.div>
           </div>
 
