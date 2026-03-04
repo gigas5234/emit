@@ -3,14 +3,8 @@
 import { useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { LiquidOrb } from "../emotion/LiquidOrb";
-
-const MESSAGES_TEMPLATE = [
-  (n1: string, n2: string) => `당신의 ${n1}과 ${n2}을(를) 섞는 중입니다...`,
-  () => "시간의 틈에서 당신을 이해할 멘토를 찾는 중...",
-  () => "곧 당신의 멘토가 도착합니다...",
-];
 
 function AlchemyInner() {
   const router = useRouter();
@@ -22,77 +16,173 @@ function AlchemyInner() {
   const n2 = search.get("n2") ?? "감정 B";
   const m1 = search.get("m1") ?? "Purple";
   const m2 = search.get("m2") ?? "Blue";
-
   const colors = useMemo(() => [c1, c2], [c1, c2]);
 
+  const blob1 = useAnimation();
+  const blob2 = useAnimation();
+  const flash = useAnimation();
+
+  const [showOrb, setShowOrb] = useState(false);
   const [msgIndex, setMsgIndex] = useState(0);
 
+  const MESSAGES = useMemo(
+    () => [
+      `${n1}과 ${n2}이 서로를 끌어당기고 있습니다...`,
+      "두 감정이 하나의 빛으로 충돌합니다...",
+      "곧 당신의 멘토가 도착합니다...",
+    ],
+    [n1, n2]
+  );
+
   useEffect(() => {
-    const timers: NodeJS.Timeout[] = [];
+    /* ── Phase 1: Rush (0 → 1000ms) ─────────────────────────────────
+       Both blobs accelerate from opposite sides toward center
+       with turbulent y motion to feel like a collision course.     */
+    blob1.start({
+      x: 0,
+      y: [0, -28, 16, -8, 2, 0],
+      opacity: 0.94,
+      transition: { duration: 1.0, ease: [0.1, 0, 0.4, 1] },
+    });
+    blob2.start({
+      x: 0,
+      y: [0, 22, -18, 10, -4, 0],
+      opacity: 0.94,
+      transition: { duration: 1.0, ease: [0.1, 0, 0.4, 1] },
+    });
 
-    timers.push(
-      setTimeout(() => setMsgIndex(1), 1000),
-      setTimeout(() => setMsgIndex(2), 2000),
-      setTimeout(() => {
-        const params = new URLSearchParams({ c1, c2, n1, n2, m1, m2 });
-        router.push(`/mentor?${params.toString()}`);
-      }, 3000)
-    );
+    /* ── Phase 2: Collision (1000ms) ───────────────────────────────── */
+    const tCollide = setTimeout(() => {
+      setMsgIndex(1);
+      // Blobs implode toward center then vanish
+      blob1.start({ scale: 2.8, opacity: 0, transition: { duration: 0.32, ease: "easeIn" } });
+      blob2.start({ scale: 2.8, opacity: 0, transition: { duration: 0.32, ease: "easeIn" } });
+      // Supernova burst
+      flash.start({
+        scale: [0, 7, 14],
+        opacity: [1, 0.85, 0],
+        transition: { duration: 0.55, ease: "easeOut" },
+      });
+    }, 1000);
 
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, [router, c1, c2, n1, n2, m1, m2]);
+    /* ── Phase 3: Merge (1380ms) ────────────────────────────────────── */
+    const tMerge = setTimeout(() => setShowOrb(true), 1380);
+    const tMsg2  = setTimeout(() => setMsgIndex(2), 2200);
 
-  const currentMessage = useMemo(() => {
-    const fn = MESSAGES_TEMPLATE[msgIndex] ?? MESSAGES_TEMPLATE[0];
-    return fn(n1, n2);
-  }, [msgIndex, n1, n2]);
+    /* ── Navigate ─────────────────────────────────────────────────── */
+    const tNav = setTimeout(() => {
+      router.push(
+        `/mentor?${new URLSearchParams({ c1, c2, n1, n2, m1, m2 }).toString()}`
+      );
+    }, 3100);
+
+    return () => [tCollide, tMerge, tMsg2, tNav].forEach(clearTimeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
-      {/* top hint */}
+      {/* Label */}
       <p
-        className="mb-6 text-[0.65rem] uppercase tracking-[0.42em] text-purple-100/70 sm:mb-8 sm:text-[0.7rem]"
+        className="mb-6 text-[0.65rem] uppercase tracking-[0.42em] text-purple-100/65 sm:text-[0.7rem]"
         style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
       >
         Emotion Alchemy
       </p>
 
-      {/* center orb */}
-      <motion.div
-        className="relative flex flex-1 flex-col items-center justify-center"
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
-        <motion.div
-          className="relative"
-          animate={{ rotate: [0, 8, -6, 0] }}
-          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+      {/* Collision arena */}
+      <div className="relative flex h-72 w-full max-w-[320px] items-center justify-center sm:max-w-sm">
+
+        {/* Emotion label left */}
+        <motion.span
+          className="absolute left-0 text-[0.65rem] tracking-[0.1em] text-white/50"
+          style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 0.7, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <LiquidOrb colors={colors} />
-        </motion.div>
+          {n1}
+        </motion.span>
 
-        {/* loading text */}
-        <div className="mt-6 h-12 w-full max-w-xl text-center text-sm sm:text-base">
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={msgIndex}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="px-4 text-white/85 drop-shadow-[0_0_14px_rgba(0,0,0,0.9)]"
-              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
+        {/* Emotion label right */}
+        <motion.span
+          className="absolute right-0 text-[0.65rem] tracking-[0.1em] text-white/50"
+          style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 0.7, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          {n2}
+        </motion.span>
+
+        {/* Blob 1 — c1, rushes from far left */}
+        <motion.div
+          className="absolute rounded-full"
+          initial={{ x: -290, opacity: 0, scale: 1 }}
+          animate={blob1}
+          style={{
+            width: 160,
+            height: 160,
+            background: `radial-gradient(circle, ${c1} 5%, ${c1}bb 40%, transparent 72%)`,
+            filter: "blur(22px)",
+          }}
+        />
+
+        {/* Blob 2 — c2, rushes from far right */}
+        <motion.div
+          className="absolute rounded-full"
+          initial={{ x: 290, opacity: 0, scale: 1 }}
+          animate={blob2}
+          style={{
+            width: 160,
+            height: 160,
+            background: `radial-gradient(circle, ${c2} 5%, ${c2}bb 40%, transparent 72%)`,
+            filter: "blur(22px)",
+          }}
+        />
+
+        {/* Collision flash — supernova burst */}
+        <motion.div
+          className="pointer-events-none absolute rounded-full"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={flash}
+          style={{
+            width: 70,
+            height: 70,
+            background: `radial-gradient(circle, #fff 0%, ${c1} 28%, ${c2} 58%, transparent 82%)`,
+          }}
+        />
+
+        {/* Merged LiquidOrb — springs in after collision */}
+        <AnimatePresence>
+          {showOrb && (
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
             >
-              {currentMessage}
-            </motion.p>
-          </AnimatePresence>
-        </div>
-      </motion.div>
+              <LiquidOrb colors={colors} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-      {/* 실루엣은 현재 연출에서 제외 */}
+      {/* Message */}
+      <div className="mt-8 h-12 w-full max-w-sm text-center sm:max-w-md">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={msgIndex}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="px-4 text-sm text-white/85 drop-shadow-[0_0_14px_rgba(0,0,0,0.9)]"
+            style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
+          >
+            {MESSAGES[msgIndex]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
     </>
   );
 }
@@ -114,12 +204,10 @@ export default function EmotionAlchemyPage() {
       </div>
 
       <Suspense>
-        <div className="relative z-10 flex min-h-screen flex-col items-center px-5 pb-8 pt-8 sm:px-10 sm:pb-12 sm:pt-10">
+        <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 pb-8 pt-8 sm:px-10">
           <AlchemyInner />
         </div>
       </Suspense>
     </main>
   );
 }
-
-

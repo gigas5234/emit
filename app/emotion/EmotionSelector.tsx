@@ -160,11 +160,6 @@ export default function EmotionSelector() {
               E.M.I.T
             </span>
           </Link>
-          <nav className="text-xs text-white/70 sm:text-sm">
-            <button className="rounded-full border border-white/20 bg-black/40 px-3 py-1 text-[0.7rem] tracking-[0.18em] uppercase text-white/80 shadow-[0_6px_18px_rgba(0,0,0,0.6)] transition hover:bg-white hover:text-black sm:px-4 sm:text-[0.75rem]">
-              My Page
-            </button>
-          </nav>
         </header>
 
         {/* main content */}
@@ -182,8 +177,8 @@ export default function EmotionSelector() {
                 className="mt-2 max-w-xs text-[0.8rem] leading-relaxed text-white/72 sm:text-sm"
                 style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
               >
-                지금 당신의 감정을 두 가지까지 선택해 보세요. 섞인 색을 바탕으로,
-                당신의 마음을 가장 잘 이해해 줄 멘토를 찾아 드립니다.
+                지금 당신의 감정을 두 가지까지 선택해 보세요.<br />
+                섞인 색을 바탕으로, 당신의 마음을 가장 잘 이해해 줄 멘토를 찾아 드립니다.
               </p>
             </div>
             <LiquidOrb colors={selectedColors} />

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import {
   useEffect,
   useRef,
@@ -199,18 +201,24 @@ export default function Home() {
         </defs>
       </svg>
 
+      {/* ── Top-left logo header ── */}
+      <header className="absolute left-0 top-0 z-20 flex items-center gap-2 px-5 py-4 sm:px-8 sm:py-5">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="relative h-7 w-7 overflow-hidden rounded-full shadow-[0_0_14px_rgba(147,51,234,0.65)] sm:h-8 sm:w-8">
+            <Image src="/00.logo.png" alt="E.M.I.T logo" fill className="object-cover" />
+          </div>
+          <span
+            className="text-xs tracking-[0.32em] text-white/75"
+            style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
+          >
+            E.M.I.T
+          </span>
+        </Link>
+      </header>
+
       {/* ── Main content ── */}
       <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4">
 
-        {/* Title — parallax, more visible */}
-        <motion.div className="mb-2 text-center" style={{ x: copyX, y: copyY }}>
-          <p
-            className="text-[0.7rem] tracking-[0.48em] text-white/60 sm:text-[0.78rem]"
-            style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-          >
-            Emotions · Mentored · In · Time
-          </p>
-        </motion.div>
         <motion.div className="mb-10 text-center" style={{ x: copyX, y: copyY }}>
           <p
             className="text-[0.82rem] leading-[1.9] tracking-[0.08em] text-white/72 sm:text-[0.92rem]"
