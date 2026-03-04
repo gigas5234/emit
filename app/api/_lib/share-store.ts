@@ -7,7 +7,8 @@ export type ShareSummaryPayload = {
   color2: string;
   quote: string;
   emotionKeyword: string;
-  summary: string;
+  healingScore: number;       // 0-100: how much lighter the person felt
+  journeyWords: string[];     // 3-step emotional arc e.g. ["토로", "공감", "수용"]
   createdAt: number;
 };
 
