@@ -9,16 +9,10 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-black text-white">
       <div className="w-full max-w-md px-6">
         <div className="mb-8 text-center">
-          <h1
-            className="text-2xl tracking-[0.12em] text-white/95 sm:text-3xl"
-            style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-          >
+          <h1 className="text-2xl font-light tracking-[0.12em] text-white/95 sm:text-3xl">
             로그인
           </h1>
-          <p
-            className="mt-2 text-[0.72rem] tracking-[0.08em] text-white/55 sm:text-sm"
-            style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
-          >
+          <p className="mt-2 text-[0.72rem] tracking-[0.08em] text-white/55 sm:text-sm">
             E.M.I.T에 다시 오신 것을 환영합니다.
           </p>
         </div>
@@ -34,8 +28,7 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
-                className="text-[0.7rem] tracking-[0.1em] text-white/70 sm:text-xs"
-              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
+              className="text-[0.7rem] tracking-[0.1em] text-white/70 sm:text-xs"
               >
                 이메일 주소
               </label>
@@ -50,8 +43,7 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
-                className="text-[0.7rem] tracking-[0.1em] text-white/70 sm:text-xs"
-              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
+              className="text-[0.7rem] tracking-[0.1em] text-white/70 sm:text-xs"
               >
                 비밀번호
               </label>
@@ -66,7 +58,6 @@ export default function LoginPage() {
             <button
               type="submit"
               className="mt-2 w-full rounded-full bg-gradient-to-r from-purple-500 via-purple-400 to-fuchsia-500 px-4 py-2.5 text-sm tracking-[0.22em] text-white shadow-[0_16px_40px_rgba(0,0,0,0.9)] transition hover:brightness-110 sm:py-3"
-              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
             >
               로그인
             </button>
@@ -75,10 +66,7 @@ export default function LoginPage() {
           <div className="mt-6 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
 
           <div className="mt-4 space-y-3">
-            <p
-              className="text-center text-[0.65rem] tracking-[0.22em] text-white/50 sm:text-[0.7rem]"
-              style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-            >
+            <p className="font-display text-center text-[0.65rem] font-light tracking-[0.22em] text-white/50 sm:text-[0.7rem]">
               다른 서비스로 로그인
             </p>
             <div className="space-y-2">

@@ -619,10 +619,7 @@ function MentorChatInner() {
             >
               {isThinking ? (
                 <div className="flex items-center justify-center gap-3 py-0.5">
-                  <span
-                    className="text-[0.72rem] tracking-[0.18em] text-violet-300/80"
-                    style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-                  >생각하고 있어요</span>
+                  <span className="font-display text-[0.72rem] font-light tracking-[0.18em] text-violet-300/80">생각하고 있어요</span>
                   <span className="flex items-end gap-1.5">
                     {[0, 1, 2].map((i) => (
                       <motion.span
@@ -635,10 +632,7 @@ function MentorChatInner() {
                   </span>
                 </div>
               ) : (
-                <div
-                  className="max-h-24 overflow-y-auto whitespace-pre-wrap leading-6 text-white/95"
-                  style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
-                >
+                <div className="max-h-24 overflow-y-auto whitespace-pre-wrap leading-6 text-white/95">
                   {displayedText}
                 </div>
               )}
@@ -649,10 +643,7 @@ function MentorChatInner() {
 
         <div className="relative flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center">
-            <p
-              className="mb-2 rounded-full border border-white/25 bg-white/10 px-4 py-1 text-[0.7rem] tracking-[0.22em] text-white/90 backdrop-blur-md"
-              style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-            >
+            <p className="font-display mb-2 rounded-full border border-white/25 bg-white/10 px-4 py-1 text-[0.7rem] font-light tracking-[0.22em] text-white/90 backdrop-blur-md">
               {matchedRow?.mentorNameKr ?? selectedMentor.mentorName}
             </p>
             <motion.div
@@ -740,10 +731,7 @@ function MentorChatInner() {
           </button>
         </div>
 
-        <p
-          className="mt-3 text-center text-[0.68rem] tracking-[0.06em] text-white/50"
-          style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
-        >
+        <p className="mt-3 text-center text-[0.68rem] tracking-[0.06em] text-white/50">
           {isThinking
             ? <span className="text-violet-300/75">멘토가 응답을 준비하고 있습니다...</span>
             : isListening

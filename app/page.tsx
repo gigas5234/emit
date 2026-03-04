@@ -207,10 +207,7 @@ export default function Home() {
           <div className="relative h-7 w-7 overflow-hidden rounded-full shadow-[0_0_14px_rgba(147,51,234,0.65)] sm:h-8 sm:w-8">
             <Image src="/00.logo.png" alt="E.M.I.T logo" fill className="object-cover" />
           </div>
-          <span
-            className="text-xs tracking-[0.32em] text-white/75"
-            style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-          >
+          <span className="font-display text-xs font-light tracking-[0.32em] text-white/75">
             E.M.I.T
           </span>
         </Link>
@@ -220,10 +217,7 @@ export default function Home() {
       <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4">
 
         <motion.div className="mb-10 text-center" style={{ x: copyX, y: copyY }}>
-          <p
-            className="text-[0.82rem] leading-[1.9] tracking-[0.08em] text-white/72 sm:text-[0.92rem]"
-            style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-          >
+          <p className="text-[0.82rem] leading-[1.9] tracking-[0.08em] text-white/72 sm:text-[0.92rem]">
             시간을 넘어온 위인의 지혜가<br />당신의 감정을 마주합니다.
           </p>
         </motion.div>
@@ -321,8 +315,7 @@ export default function Home() {
             whileTap={{ scale: 0.95 }}
             onClick={handleBegin}
             disabled={isStarting}
-            className="relative overflow-hidden rounded-full border border-white/28 bg-white/8 px-12 py-[13px] backdrop-blur-sm transition-colors hover:border-white/45 hover:bg-white/14 disabled:cursor-not-allowed"
-            style={{ fontWeight: 300 }}
+            className="relative overflow-hidden rounded-full border border-white/28 bg-white/8 px-12 py-[13px] font-light backdrop-blur-sm transition-colors hover:border-white/45 hover:bg-white/14 disabled:cursor-not-allowed"
           >
             <motion.span
               className="pointer-events-none absolute inset-0 rounded-full"
@@ -333,18 +326,12 @@ export default function Home() {
                   "radial-gradient(circle at 50% 50%, rgba(200,155,255,0.24), transparent 70%)",
               }}
             />
-            <span
-              className="relative z-10 text-sm tracking-[0.3em] text-white/90"
-              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
-            >
+            <span className="relative z-10 text-sm tracking-[0.3em] text-white/90">
               여정 시작하기
             </span>
           </motion.button>
 
-          <p
-            className="text-center text-[0.58rem] tracking-[0.3em] text-white/28"
-            style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-          >
+          <p className="font-display text-center text-[0.58rem] font-light tracking-[0.3em] text-white/28">
             <span className="text-white/82">E</span>motions ·{" "}
             <span className="text-white/82">M</span>entored ·{" "}
             <span className="text-white/82">I</span>n ·{" "}
@@ -353,10 +340,7 @@ export default function Home() {
         </div>
 
         {/* Copyright */}
-        <p
-          className="absolute bottom-4 left-0 right-0 text-center text-[0.54rem] tracking-[0.22em] text-white/22"
-          style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif" }}
-        >
+        <p className="font-display absolute bottom-4 left-0 right-0 text-center text-[0.54rem] font-light tracking-[0.22em] text-white/22">
           © {new Date().getFullYear()} E.M.I.T. All rights reserved.
         </p>
       </section>

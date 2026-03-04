@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 
 /* ── Blend two hex colours 50/50 ─────────────────────────────────── */
@@ -90,11 +89,8 @@ function AlchemyInner() {
 
   return (
     <>
-      {/* Label — sits above everything */}
-      <p
-        className="relative z-50 mb-6 text-[0.65rem] uppercase tracking-[0.42em] text-purple-100/65 sm:text-[0.7rem]"
-        style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-      >
+      {/* Label */}
+      <p className="font-display relative z-50 mb-6 text-[0.65rem] font-light uppercase tracking-[0.42em] text-purple-100/65 sm:text-[0.7rem]">
         Emotion Alchemy
       </p>
 
@@ -104,7 +100,6 @@ function AlchemyInner() {
         {/* Emotion label left */}
         <motion.span
           className="absolute left-0 text-[0.65rem] tracking-[0.1em] text-white/50"
-          style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 0.7, x: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
@@ -115,7 +110,6 @@ function AlchemyInner() {
         {/* Emotion label right */}
         <motion.span
           className="absolute right-0 text-[0.65rem] tracking-[0.1em] text-white/50"
-          style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
           initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 0.7, x: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
@@ -157,22 +151,27 @@ function AlchemyInner() {
             background: `radial-gradient(circle, #fff 0%, ${c1} 28%, ${c2} 58%, transparent 82%)`,
           }}
         />
+
+        {/* Mixed-colour orb — fills arena center, not the whole screen */}
+        <AnimatePresence>
+          {showFill && (
+            <motion.div
+              className="pointer-events-none absolute rounded-full"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.85, ease: [0.34, 1.2, 0.64, 1] }}
+              style={{
+                width: 230, height: 230,
+                background: `radial-gradient(circle, #fff 0%, ${mixedColor} 22%, ${mixedColor}cc 55%, ${mixedColor}44 80%, transparent 100%)`,
+                filter: "blur(10px)",
+                boxShadow: `0 0 60px ${mixedColor}99, 0 0 120px ${mixedColor}44`,
+              }}
+            />
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* ── Mixed-colour full-screen fill ─────────────────────────── */}
-      <AnimatePresence>
-        {showFill && (
-          <motion.div
-            className="pointer-events-none fixed inset-0 z-20"
-            initial={{ clipPath: "circle(0% at 50% 50%)" }}
-            animate={{ clipPath: "circle(150% at 50% 50%)" }}
-            transition={{ duration: 1.35, ease: [0.08, 0, 0.35, 1] }}
-            style={{ background: mixedColor }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Message — always on top */}
+      {/* Message */}
       <div className="relative z-50 mt-8 h-12 w-full max-w-sm text-center sm:max-w-md">
         <AnimatePresence mode="wait">
           <motion.p
@@ -181,12 +180,7 @@ function AlchemyInner() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="px-4 text-sm drop-shadow-[0_1px_8px_rgba(0,0,0,0.8)]"
-            style={{
-              fontFamily: "system-ui, 'Noto Sans KR', sans-serif",
-              fontWeight: 300,
-              color: showFill ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.85)",
-            }}
+            className="px-4 text-sm text-white/85 drop-shadow-[0_1px_8px_rgba(0,0,0,0.8)]"
           >
             {MESSAGES[msgIndex]}
           </motion.p>
@@ -198,19 +192,15 @@ function AlchemyInner() {
 
 export default function EmotionAlchemyPage() {
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-black text-white">
-      {/* background */}
-      <div className="pointer-events-none absolute inset-0">
-        <Image
-          src="/01.back_img.png"
-          alt="cosmic background"
-          fill
-          priority
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_15%,rgba(147,51,234,0.65),transparent_55%),radial-gradient(circle_at_20%_80%,rgba(56,189,248,0.5),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,transparent_0%,black_88%)] mix-blend-multiply" />
-      </div>
+    <main className="relative min-h-screen w-full overflow-hidden bg-[#020108] text-white">
+      {/* background — CSS nebula only */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at 60% 15%, rgba(147,51,234,0.16) 0%, transparent 55%), radial-gradient(ellipse at 20% 85%, rgba(56,189,248,0.1) 0%, transparent 55%)",
+        }}
+      />
 
       <Suspense>
         <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 pb-8 pt-8 sm:px-10">

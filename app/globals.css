@@ -3,6 +3,12 @@
 html,
 body {
   height: 100%;
+  font-family: system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
+
+/* Display / serif font — English labels, slogans */
+.font-display {
+  font-family: var(--font-display, "Cormorant Garamond", Georgia, serif);
 }
 
 /* nicer tap highlights on mobile */

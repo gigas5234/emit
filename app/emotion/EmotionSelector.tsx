@@ -126,19 +126,15 @@ export default function EmotionSelector() {
   };
 
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-black text-white">
-      {/* background */}
-      <div className="pointer-events-none absolute inset-0">
-        <Image
-          src="/01.back_img.png"
-          alt="cosmic background"
-          fill
-          priority
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_20%,rgba(147,51,234,0.55),transparent_55%),radial-gradient(circle_at_15%_80%,rgba(96,165,250,0.4),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,transparent_0%,black_85%)] mix-blend-multiply" />
-      </div>
+    <main className="relative min-h-screen w-full overflow-hidden bg-[#020108] text-white">
+      {/* background — pure CSS nebula, no image */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at 65% 15%, rgba(147,51,234,0.18) 0%, transparent 55%), radial-gradient(ellipse at 15% 85%, rgba(96,165,250,0.12) 0%, transparent 55%)",
+        }}
+      />
 
       <div className="relative z-10 flex min-h-screen flex-col">
         {/* nav */}
@@ -153,10 +149,7 @@ export default function EmotionSelector() {
                 priority
               />
             </div>
-            <span
-              className="text-xs tracking-[0.32em] text-white/80 sm:text-sm"
-              style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-            >
+            <span className="font-display text-xs font-light tracking-[0.32em] text-white/80 sm:text-sm">
               E.M.I.T
             </span>
           </Link>
@@ -167,16 +160,10 @@ export default function EmotionSelector() {
           {/* orb area */}
           <section className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:items-start sm:gap-10">
             <div className="text-center sm:text-left">
-              <p
-                className="text-[0.62rem] uppercase tracking-[0.38em] text-purple-100/75 sm:text-[0.68rem]"
-                style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
-              >
+              <p className="font-display text-[0.62rem] font-light uppercase tracking-[0.38em] text-purple-100/75 sm:text-[0.68rem]">
                 Emotion Mix
               </p>
-              <p
-                className="mt-2 max-w-xs text-[0.8rem] leading-relaxed text-white/72 sm:text-sm"
-                style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 300 }}
-              >
+              <p className="mt-2 max-w-xs text-[0.8rem] leading-relaxed text-white/72 sm:text-sm">
                 지금 당신의 감정을 두 가지까지 선택해 보세요.<br />
                 섞인 색을 바탕으로, 당신의 마음을 가장 잘 이해해 줄 멘토를 찾아 드립니다.
               </p>
@@ -218,8 +205,6 @@ export default function EmotionSelector() {
               style={
                 canProceed
                   ? {
-                      fontFamily: "system-ui, 'Noto Sans KR', sans-serif",
-                      fontWeight: 400,
                       background: `linear-gradient(135deg, ${selectedColors[0]} 0%, ${selectedColors[1]} 100%)`,
                       borderColor: "rgba(255,255,255,0.35)",
                       color: "#fff",
@@ -227,8 +212,6 @@ export default function EmotionSelector() {
                       boxShadow: `0 0 24px ${selectedColors[0]}88, 0 0 48px ${selectedColors[1]}55, 0 8px 32px rgba(0,0,0,0.7)`,
                     }
                   : {
-                      fontFamily: "system-ui, 'Noto Sans KR', sans-serif",
-                      fontWeight: 400,
                       borderColor: "rgba(255,255,255,0.12)",
                       background: "rgba(255,255,255,0.05)",
                       color: "rgba(255,255,255,0.45)",
