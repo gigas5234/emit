@@ -138,8 +138,14 @@ function MentorChatInner() {
   const instantImageSrc = getMentorImageFromColors(m1, m2);
 
   const [rows, setRows] = useState<MentorCsvRow[]>([]);
+  const OPENING_LINES = [
+    "오늘 하루 어떠셨나요?\n천천히, 편하게 이야기해 주세요.",
+    "많이 지치셨죠. 오늘 어떤 일이 있으셨나요?\n여기서는 천천히 이야기해도 괜찮아요.",
+    "오늘 어떤 마음으로 여기 오셨나요?\n하고 싶은 이야기를 들려주세요, 천천히 들을게요.",
+    "안녕하세요. 오늘 어떤 하루를 보내셨나요?\n편하게, 생각나는 대로 말씀해 주세요.",
+  ];
   const [mentorText, setMentorText] = useState(
-    "좋습니다. 지금 마음의 결을 들려주시면, 천천히 함께 풀어보겠습니다."
+    () => OPENING_LINES[Math.floor(Math.random() * OPENING_LINES.length)]
   );
   const [displayedText, setDisplayedText] = useState("");
   const [userText, setUserText] = useState("");
