@@ -28,7 +28,6 @@ export default function Home() {
 
   const [mainIndex, setMainIndex] = useState(0);
   const [teaserIndex, setTeaserIndex] = useState(0);
-  const [timeRewind, setTimeRewind] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -41,13 +40,6 @@ export default function Home() {
     const id = setInterval(() => {
       setTeaserIndex((prev) => (prev + 1) % teaserPhrases.length);
     }, 4500);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTimeRewind((prev) => !prev);
-    }, 2400);
     return () => clearInterval(id);
   }, []);
 
@@ -122,22 +114,6 @@ export default function Home() {
       <section className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-4 sm:py-8">
         {/* 상단 로고 재구성 */}
         <div className="flex w-full flex-col items-center justify-center pt-3 sm:pt-5">
-          {/* TIME -> E.M.I.T (위치: 로고 위, 단순 전환) */}
-          <div className="mb-3 mt-1 h-8 sm:mb-4">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={timeRewind ? "emit" : "time"}
-                initial={{ opacity: 0, y: 4, filter: "blur(2px)" }}
-                animate={{ opacity: 0.9, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: -4, filter: "blur(2px)" }}
-                transition={{ duration: 0.55, ease: "easeOut" }}
-                className="text-[0.72rem] font-semibold uppercase tracking-[0.38em] text-violet-100/90"
-              >
-                {timeRewind ? "E.M.I.T" : "TIME REWIND"}
-              </motion.p>
-            </AnimatePresence>
-          </div>
-
           {/* 로고: 네모 배경 감추기 위해 원형 클립 */}
           <motion.div
             className="relative"
@@ -193,25 +169,26 @@ export default function Home() {
               <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.3),transparent_55%),radial-gradient(circle_at_70%_60%,rgba(167,139,250,0.35),transparent_55%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <span className="relative z-10">여정 시작하기</span>
             </motion.button>
+
+            <div className="mt-3 h-6 overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={teaserIndex}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 0.76, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className="text-center text-[0.72rem] text-white/70"
+                >
+                  {teaserPhrases[teaserIndex]}
+                </motion.p>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 
-        {/* 하단 티저 텍스트 (위인 멘트) */}
-        <div className="mb-2 flex h-8 w-full items-end justify-center text-xs text-white/70 sm:mb-4 sm:h-10">
-          <div className="relative h-7 overflow-hidden sm:h-8">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={teaserIndex}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 0.7, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="px-6 text-center text-[0.7rem]"
-              >
-                {teaserPhrases[teaserIndex]}
-              </motion.p>
-            </AnimatePresence>
-          </div>
+        <div className="mb-1 w-full text-center text-[0.64rem] text-white/45 sm:mb-2">
+          © {new Date().getFullYear()} E.M.I.T. All rights reserved.
         </div>
       </section>
     </main>
