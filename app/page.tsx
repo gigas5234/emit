@@ -7,12 +7,12 @@ import {
   useMotionTemplate,
   useScroll,
 } from "framer-motion";
-import { Asterisk, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Asterisk, Sparkles, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type ParticleConfig = {
   id: string;
-  kind: "dot" | "sparkle" | "asterisk";
+  kind: "dot" | "sparkle" | "star";
   xPct: number;
   yPct: number;
   sizePx: number;
@@ -48,25 +48,27 @@ function ParticleItem({
           y,
           rotate: r,
           boxShadow:
-            "0 0 10px rgba(167, 139, 250, 0.35), 0 0 18px rgba(255, 255, 255, 0.16)",
+            "0 0 14px rgba(190, 140, 255, 0.55), 0 0 26px rgba(255, 255, 255, 0.45)",
         }}
       />
     );
   }
 
-  const Icon = p.kind === "sparkle" ? Sparkles : Asterisk;
+  const Icon = p.kind === "sparkle" ? Sparkles : Star;
   return (
     <motion.span
-      className="absolute text-white/70"
+      className="absolute"
       style={{
         ...baseStyle,
         y,
         rotate: r,
-        filter: "drop-shadow(0 0 10px rgba(167, 139, 250, 0.35))",
+        color: "rgba(235, 225, 255, 0.9)",
+        filter:
+          "drop-shadow(0 0 10px rgba(190, 140, 255, 0.8)) drop-shadow(0 0 20px rgba(190, 140, 255, 0.9))",
       }}
       aria-hidden="true"
     >
-      <Icon size={p.sizePx * 6} strokeWidth={1.4} />
+      <Icon size={p.sizePx} strokeWidth={1.3} />
     </motion.span>
   );
 }
@@ -80,12 +82,12 @@ function ParticleField({
 
   useEffect(() => {
     const rand = (min: number, max: number) => min + Math.random() * (max - min);
-    const count = 34;
-    const icons = 7;
+    const count = 100;
+    const icons = 18;
 
     const dots: ParticleConfig[] = Array.from({ length: count }, (_, i) => {
-      const sizePx = Math.round(rand(1, 3));
-      const opacity = Number(rand(0.12, 0.5).toFixed(2));
+      const sizePx = Math.round(rand(2, 4));
+      const opacity = Number(rand(0.25, 0.7).toFixed(2));
       return {
         id: `d-${i}-${Math.random().toString(16).slice(2)}`,
         kind: "dot",
@@ -99,14 +101,14 @@ function ParticleField({
     });
 
     const iconBits: ParticleConfig[] = Array.from({ length: icons }, (_, i) => {
-      const kind = Math.random() > 0.5 ? "sparkle" : "asterisk";
-      const opacity = Number(rand(0.14, 0.38).toFixed(2));
+      const kind = Math.random() > 0.5 ? "sparkle" : "star";
+      const opacity = Number(rand(0.4, 0.8).toFixed(2));
       return {
         id: `i-${i}-${Math.random().toString(16).slice(2)}`,
         kind,
         xPct: Number(rand(5, 95).toFixed(2)),
         yPct: Number(rand(5, 95).toFixed(2)),
-        sizePx: Math.round(rand(2, 4)),
+        sizePx: Math.round(rand(12, 24)),
         opacity,
         driftPx: Math.round(rand(180, 900)),
         rotateDeg: Number(rand(-120, 120).toFixed(2)),
@@ -137,24 +139,26 @@ export default function Home() {
   // 2. Mentor silhouette (02.mentor_shadow.png)
   const mentorOpacity = useTransform(
     scrollYProgress,
-    [0.1, 0.3, 0.5, 0.7],
+    [0.2, 0.4, 0.6, 0.7],
     [0, 1, 1, 0]
   );
-  const mentorScale = useTransform(scrollYProgress, [0.1, 0.7], [0.9, 1.1]);
+  const mentorScale = useTransform(scrollYProgress, [0.2, 0.7], [0.9, 1.1]);
 
   // 3. Portal light (03.portal_light.png)
   const portalOpacity = useTransform(
     scrollYProgress,
-    [0.6, 0.85, 1],
-    [0, 1, 1]
+    [0.65, 0.85],
+    [0, 1]
   );
-  const portalScale = useTransform(scrollYProgress, [0.6, 1], [0.8, 1.5]);
-  const portalBlur = useTransform(scrollYProgress, [0.6, 1], [10, 0]);
+  const portalScale = useTransform(scrollYProgress, [0.65, 1], [0.9, 1.05]);
+  const portalBlur = useTransform(scrollYProgress, [0.65, 1], [6, 0]);
   const portalFilter = useMotionTemplate`blur(${portalBlur}px)`;
 
   // 4. Central logo (00.logo.jpg)
   const logoRotate = useTransform(scrollYProgress, [0, 1], [0, -720]);
-  const logoOpacity = useTransform(scrollYProgress, [0.7, 0.9], [1, 0]);
+  const logoOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const logoScale = useTransform(scrollYProgress, [0, 0.2, 1], [1, 0.8, 0.8]);
+  const logoY = useTransform(scrollYProgress, [0, 0.2, 1], [0, -100, -100]);
 
   // CTA button appearance (tied to end of scroll)
   const ctaOpacity = useTransform(scrollYProgress, [0.85, 1], [0, 1]);
@@ -187,7 +191,11 @@ export default function Home() {
         {/* 2. Mentor silhouette */}
         <motion.div
           className="absolute inset-0 z-10"
-          style={{ opacity: mentorOpacity, scale: mentorScale }}
+          style={{
+            opacity: mentorOpacity,
+            scale: mentorScale,
+            mixBlendMode: "screen",
+          }}
           aria-hidden="true"
         >
           <Image
@@ -218,9 +226,9 @@ export default function Home() {
         {/* 4. Central spinning logo */}
         <motion.div
           className="absolute inset-0 z-30 flex items-center justify-center"
-          style={{ rotate: logoRotate, opacity: logoOpacity }}
+          style={{ rotate: logoRotate, opacity: logoOpacity, scale: logoScale, y: logoY }}
         >
-          <div className="relative h-48 w-48 overflow-hidden rounded-full shadow-[0_0_46px_rgba(147,51,234,0.8)] sm:h-56 sm:w-56">
+          <div className="relative h-48 w-48 overflow-hidden rounded-full shadow-[0_0_32px_rgba(147,51,234,0.7)] sm:h-56 sm:w-56">
             <Image
               src="/00.logo.png"
               alt="E.M.I.T Logo"
