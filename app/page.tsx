@@ -21,15 +21,6 @@ type ParticleConfig = {
   rotateDeg: number;
 };
 
-function useFadeInOut(
-  progress: ReturnType<typeof useScroll>["scrollYProgress"],
-  start: number,
-  mid: number,
-  end: number
-) {
-  return useTransform(progress, [start, mid, end], [0, 1, 0]);
-}
-
 function ParticleItem({
   p,
   progress,
@@ -135,180 +126,168 @@ function ParticleField({
 }
 
 export default function Home() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
+  const { scrollYProgress } = useScroll();
 
-  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.18]);
-  const bgBlur = useTransform(scrollYProgress, [0, 1], [0, 6]);
-  const bgDim = useTransform(scrollYProgress, [0, 1], [0.12, 0.45]);
+  // 1. Base background (01.back_img.jpg)
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.3]);
+  const bgBlur = useTransform(scrollYProgress, [0, 1], [0, 10]);
+  const bgDim = useTransform(scrollYProgress, [0, 1], [0.1, 0.5]);
   const bgFilter = useMotionTemplate`blur(${bgBlur}px) saturate(1.15)`;
 
-  const logoRotate = useTransform(scrollYProgress, [0, 1], [0, -540]);
-  const logoScale = useTransform(scrollYProgress, [0, 0.3, 1], [1, 0.97, 0.94]);
+  // 2. Mentor silhouette (02.mentor_shadow.png)
+  const mentorOpacity = useTransform(
+    scrollYProgress,
+    [0.1, 0.3, 0.5, 0.7],
+    [0, 1, 1, 0]
+  );
+  const mentorScale = useTransform(scrollYProgress, [0.1, 0.7], [0.9, 1.1]);
 
-  const hook1Opacity = useTransform(scrollYProgress, [0, 0.1, 0.3], [1, 1, 0]);
-  const hook2Opacity = useFadeInOut(scrollYProgress, 0.18, 0.35, 0.5);
-
-  const mentorOpacity = useFadeInOut(scrollYProgress, 0.25, 0.4, 0.6);
-  const mentorScale = useTransform(scrollYProgress, [0.25, 0.4, 0.6], [1.02, 1, 0.98]);
-
-  const mentorTextOpacity = useFadeInOut(scrollYProgress, 0.3, 0.45, 0.65);
-
-  const portalOpacity = useTransform(scrollYProgress, [0.6, 0.8, 1], [0, 0.95, 1]);
-  const portalScale = useTransform(scrollYProgress, [0.6, 1], [0.85, 1.25]);
+  // 3. Portal light (03.portal_light.png)
+  const portalOpacity = useTransform(
+    scrollYProgress,
+    [0.6, 0.85, 1],
+    [0, 1, 1]
+  );
+  const portalScale = useTransform(scrollYProgress, [0.6, 1], [0.8, 1.5]);
   const portalBlur = useTransform(scrollYProgress, [0.6, 1], [10, 0]);
   const portalFilter = useMotionTemplate`blur(${portalBlur}px)`;
 
-  const ctaOpacity = useTransform(scrollYProgress, [0.72, 0.86], [0, 1]);
-  const ctaY = useTransform(scrollYProgress, [0.72, 0.86], [20, 0]);
+  // 4. Central logo (00.logo.jpg)
+  const logoRotate = useTransform(scrollYProgress, [0, 1], [0, -720]);
+  const logoOpacity = useTransform(scrollYProgress, [0.7, 0.9], [1, 0]);
+
+  // CTA button appearance (tied to end of scroll)
+  const ctaOpacity = useTransform(scrollYProgress, [0.85, 1], [0, 1]);
+  const ctaY = useTransform(scrollYProgress, [0.85, 1], [20, 0]);
 
   return (
-    <main className="relative w-full bg-black text-white">
-      <div ref={containerRef} className="relative h-[420vh] overflow-hidden">
-        <div className="sticky top-0 h-screen w-full">
-          {/* Base background: parallax diving */}
+    <main className="relative h-[500vh] w-full bg-black text-white">
+      {/* FIXED LAYER (all visuals, z-0) */}
+      <div className="fixed inset-0 z-0 h-screen w-screen overflow-hidden">
+        {/* 1. Base background */}
+        <motion.div
+          className="absolute inset-0"
+          style={{ scale: bgScale, filter: bgFilter }}
+          aria-hidden="true"
+        >
+          <Image
+            src="/01.back_img.png"
+            alt="Deep space nebula background"
+            fill
+            priority
+            className="object-cover"
+          />
           <motion.div
-            className="absolute inset-0"
-            style={{ scale: bgScale, filter: bgFilter }}
-            aria-hidden="true"
-          >
+            className="absolute inset-0 bg-black"
+            style={{ opacity: bgDim }}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_25%,rgba(147,51,234,0.42),transparent_58%),radial-gradient(circle_at_20%_80%,rgba(96,165,250,0.28),transparent_64%)]" />
+        </motion.div>
+
+        {/* 2. Mentor silhouette */}
+        <motion.div
+          className="absolute inset-0 z-10"
+          style={{ opacity: mentorOpacity, scale: mentorScale }}
+          aria-hidden="true"
+        >
+          <Image
+            src="/02.mentor_shadow.png"
+            alt="Mentor silhouette"
+            fill
+            className="object-contain object-center"
+            priority={false}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/65" />
+        </motion.div>
+
+        {/* 3. Portal light */}
+        <motion.div
+          className="absolute inset-0 z-20 mix-blend-screen"
+          style={{ opacity: portalOpacity, scale: portalScale, filter: portalFilter }}
+          aria-hidden="true"
+        >
+          <Image
+            src="/03.portal_light.png"
+            alt="Cosmic portal light"
+            fill
+            className="object-cover object-center"
+            priority={false}
+          />
+        </motion.div>
+
+        {/* 4. Central spinning logo */}
+        <motion.div
+          className="absolute inset-0 z-30 flex items-center justify-center"
+          style={{ rotate: logoRotate, opacity: logoOpacity }}
+        >
+          <div className="relative h-48 w-48 overflow-hidden rounded-full shadow-[0_0_46px_rgba(147,51,234,0.8)] sm:h-56 sm:w-56">
             <Image
-              src="/01.back_img.png"
-              alt="Deep space nebula background"
+              src="/00.logo.png"
+              alt="E.M.I.T Logo"
               fill
-              priority
               className="object-cover"
+              priority
             />
-            <motion.div
-              className="absolute inset-0 bg-black"
-              style={{ opacity: bgDim }}
-            />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_25%,rgba(147,51,234,0.38),transparent_56%),radial-gradient(circle_at_20%_80%,rgba(96,165,250,0.24),transparent_62%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,transparent_0%,black_82%)] mix-blend-multiply" />
-          </motion.div>
-
-          {/* Particles depth layer */}
-          <ParticleField progress={scrollYProgress} />
-
-          {/* Mentor silhouette emerges (mid-scroll) */}
-          <motion.div
-            className="pointer-events-none absolute inset-0"
-            style={{ opacity: mentorOpacity }}
-            aria-hidden="true"
-          >
-            <motion.div
-              className="absolute inset-0"
-              style={{ scale: mentorScale }}
-            >
-              <Image
-                src="/02.mentor_shadow.png"
-                alt="Mentor silhouette"
-                fill
-                className="object-cover object-center"
-                priority={false}
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/55" />
-            </motion.div>
-          </motion.div>
-
-          {/* Portal climax (final) */}
-          <motion.div
-            className="pointer-events-none absolute inset-0"
-            style={{ opacity: portalOpacity }}
-            aria-hidden="true"
-          >
-            <motion.div
-              className="absolute inset-0"
-              style={{
-                scale: portalScale,
-                filter: portalFilter,
-              }}
-            >
-              <Image
-                src="/03.portal_light.png"
-                alt="Cosmic portal light"
-                fill
-                className="object-cover object-center mix-blend-screen"
-                priority={false}
-              />
-              <div className="absolute inset-0 bg-black/25" />
-            </motion.div>
-          </motion.div>
-
-          {/* Foreground UI (sticky logo + scroll-driven text) */}
-          <div className="relative z-10 flex h-full w-full items-center justify-center px-4">
-            <div className="flex w-full max-w-3xl flex-col items-center text-center">
-              {/* Sticky logo with scroll-driven rotation */}
-              <motion.div
-                className="relative"
-                style={{ rotate: logoRotate, scale: logoScale }}
-              >
-                <div className="relative h-40 w-40 overflow-hidden rounded-full shadow-[0_0_46px_rgba(147,51,234,0.72)] sm:h-56 sm:w-56">
-                  <Image
-                    src="/00.logo.png"
-                    alt="E.M.I.T Logo"
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                </div>
-              </motion.div>
-
-              {/* Storytelling hooks (scroll-fade) */}
-              <div className="relative mt-6 h-14 w-full sm:mt-8 sm:h-16">
-                <motion.p
-                  className="absolute inset-x-0 top-0 px-6 text-sm leading-relaxed text-white/90 drop-shadow-[0_0_14px_rgba(0,0,0,0.95)] sm:text-base"
-                  style={{ opacity: hook1Opacity }}
-                >
-                  지금 어떤 감정을 느끼고 계신가요?
-                </motion.p>
-                <motion.p
-                  className="absolute inset-x-0 top-0 px-6 text-sm leading-relaxed text-white/90 drop-shadow-[0_0_14px_rgba(0,0,0,0.95)] sm:text-base"
-                  style={{ opacity: hook2Opacity }}
-                >
-                  시간을 거슬러, 당신을 이해할 멘토를 만나보세요.
-                </motion.p>
-              </div>
-
-              {/* Mid-scroll mentor text */}
-              <motion.div className="mt-10" style={{ opacity: mentorTextOpacity }}>
-                <p className="text-xs font-medium uppercase tracking-[0.32em] text-purple-200/75">
-                  E.M.I.T · Emotion Mentoring In Time
-                </p>
-                <p className="mt-3 text-sm text-white/80">
-                  때로는 시대를 초월한 지혜가...
-                </p>
-              </motion.div>
-
-              {/* CTA glass button at the portal center */}
-              <motion.div
-                className="mt-12"
-                style={{ opacity: ctaOpacity, y: ctaY }}
-              >
-                <motion.button
-                  whileHover={{
-                    scale: 1.04,
-                    boxShadow: "0 0 26px rgba(167, 139, 250, 0.85)",
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  className="group relative inline-flex items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-9 py-4 text-sm font-semibold tracking-[0.2em] text-white backdrop-blur-md"
-                >
-                  <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.22),transparent_55%),radial-gradient(circle_at_70%_60%,rgba(167,139,250,0.22),transparent_55%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  <span className="relative z-10">여정 시작하기</span>
-                </motion.button>
-              </motion.div>
-            </div>
           </div>
+        </motion.div>
 
-          {/* subtle bottom fade */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
+        {/* Stardust particles, tied to scroll */}
+        <ParticleField progress={scrollYProgress} />
+      </div>
+
+      {/* SCROLL LAYER (all text & CTA, z-50) */}
+      <div className="absolute inset-0 z-50">
+        <div className="relative h-full w-full">
+          {/* Section 1: 0-100vh */}
+          <section className="flex min-h-screen items-center justify-center px-6 text-center">
+            <div className="max-w-xl space-y-4">
+              <p className="text-sm text-purple-100/80">
+                지금 어떤 감정을 느끼고 계신가요?
+              </p>
+              <p className="text-base text-white/90">
+                시간을 거슬러, 당신을 이해할 멘토를 만나보세요.
+              </p>
+            </div>
+          </section>
+
+          {/* Section 2: around 250vh */}
+          <section className="flex min-h-screen items-center justify-center px-6 pt-[150vh] text-center">
+            <div className="max-w-2xl space-y-4">
+              <p className="text-xs font-medium uppercase tracking-[0.32em] text-purple-200/80">
+                E.M.I.T · Emotion Mentoring In Time
+              </p>
+              <p className="text-base text-white/85">
+                때로는 시대를 초월한 지혜가 가장 날카로운 해답이 됩니다.
+              </p>
+            </div>
+          </section>
+
+          {/* Section 3: bottom (450-500vh) */}
+          <section className="flex min-h-screen items-center justify-center px-6 pt-[340vh] pb-[40vh]">
+            <motion.div
+              className="w-full max-w-md rounded-3xl border border-white/15 bg-white/8 p-6 text-center shadow-[0_32px_80px_rgba(0,0,0,0.8)] backdrop-blur-md"
+              style={{ opacity: ctaOpacity, y: ctaY }}
+            >
+              <p className="mb-3 text-xs font-medium uppercase tracking-[0.3em] text-purple-100/80">
+                Portal To Another Era
+              </p>
+              <p className="mb-6 text-sm text-white/85">
+                당신의 멘토가 기다리고 있습니다.
+              </p>
+              <motion.button
+                whileHover={{
+                  scale: 1.04,
+                  boxShadow: "0 0 26px rgba(167, 139, 250, 0.9)",
+                }}
+                whileTap={{ scale: 0.97 }}
+                className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border border-purple-300/70 bg-gradient-to-r from-purple-500/80 via-purple-400/80 to-fuchsia-500/80 px-6 py-3 text-sm font-semibold tracking-[0.18em] text-white"
+              >
+                <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.25),transparent_55%),radial-gradient(circle_at_70%_60%,rgba(167,139,250,0.3),transparent_55%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <span className="relative z-10">여정 시작하기</span>
+              </motion.button>
+            </motion.div>
+          </section>
         </div>
-
-        {/* Scroll spacer content (invisible; drives scroll progress) */}
-        <div className="absolute left-0 top-0 h-full w-full" aria-hidden="true" />
       </div>
     </main>
   );
