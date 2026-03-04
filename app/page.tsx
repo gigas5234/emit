@@ -28,6 +28,7 @@ export default function Home() {
 
   const [mainIndex, setMainIndex] = useState(0);
   const [teaserIndex, setTeaserIndex] = useState(0);
+  const [timeRewind, setTimeRewind] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -40,6 +41,13 @@ export default function Home() {
     const id = setInterval(() => {
       setTeaserIndex((prev) => (prev + 1) % teaserPhrases.length);
     }, 4500);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setTimeRewind((prev) => !prev);
+    }, 2400);
     return () => clearInterval(id);
   }, []);
 
@@ -112,27 +120,72 @@ export default function Home() {
 
       {/* Foreground content (no scroll layout) */}
       <section className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-4 sm:py-8">
-        {/* 상단 로고 (중앙보다 위, 약간 더 크게) */}
-        <div className="flex w-full justify-center pt-4 sm:pt-6">
+        {/* 상단 로고 재구성 */}
+        <div className="flex w-full flex-col items-center justify-center pt-3 sm:pt-5">
           <motion.div
             className="relative"
             style={{ x: logoX, y: logoY }}
           >
-            <div className="relative h-36 w-36 overflow-hidden rounded-full shadow-[0_18px_40px_rgba(0,0,0,0.85)] sm:h-48 sm:w-48">
+            <div className="relative h-44 w-44 overflow-hidden shadow-[0_18px_44px_rgba(0,0,0,0.82)] sm:h-56 sm:w-56">
               <Image
                 src="/00.logo.png"
                 alt="E.M.I.T Logo"
                 fill
                 priority
-                className="object-cover"
+                className="object-contain"
               />
             </div>
           </motion.div>
+
+          {/* TIME -> EMIT 리와인드 모션 (강화) */}
+          <div className="mt-2 flex min-h-[3.3rem] flex-col items-center justify-center sm:mt-3">
+            <motion.span
+              className="mb-1 text-[0.62rem] uppercase tracking-[0.42em] text-violet-200/80"
+              animate={{
+                opacity: [0.35, 0.9, 0.35],
+                letterSpacing: ["0.35em", "0.48em", "0.35em"],
+              }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            >
+              Time Rewind
+            </motion.span>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={timeRewind ? "emit" : "time"}
+                initial={{ opacity: 0, y: 10, rotateX: -55, filter: "blur(6px)" }}
+                animate={{ opacity: 1, y: 0, rotateX: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -10, rotateX: 50, filter: "blur(7px)" }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+                className="flex items-center justify-center gap-1 [perspective:700px]"
+              >
+                {(timeRewind ? ["E", "M", "I", "T"] : ["T", "I", "M", "E"]).map((ch, idx) => (
+                  <motion.span
+                    key={`${ch}-${idx}-${timeRewind ? "emit" : "time"}`}
+                    initial={{
+                      opacity: 0,
+                      y: 12,
+                      rotateY: timeRewind ? -85 : 85,
+                      scale: 0.82,
+                    }}
+                    animate={{ opacity: 1, y: 0, rotateY: 0, scale: 1 }}
+                    transition={{
+                      duration: 0.55,
+                      delay: idx * 0.07,
+                      ease: [0.2, 0.9, 0.25, 1],
+                    }}
+                    className="inline-block text-[1.02rem] font-bold tracking-[0.22em] text-purple-100 drop-shadow-[0_0_14px_rgba(192,132,252,0.75)] sm:text-[1.12rem]"
+                  >
+                    {ch}
+                  </motion.span>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* 중앙 메인 카피 + 진입 박스 */}
-        <div className="flex flex-1 flex-col items-center justify-center space-y-5 sm:space-y-8">
-          <div className="relative h-20 w-full max-w-xl text-center">
+        <div className="flex flex-1 flex-col items-center justify-center space-y-2 sm:space-y-3">
+          <div className="relative h-14 w-full max-w-xl text-center sm:h-16">
             <AnimatePresence mode="wait">
               <motion.p
                 key={mainIndex}
@@ -148,11 +201,11 @@ export default function Home() {
           </div>
 
           {/* 진입용 글래스 박스 */}
-          <div className="w-full max-w-xl rounded-3xl border border-white/15 bg-white/5 p-5 shadow-[0_24px_50px_rgba(0,0,0,0.85)] backdrop-blur-md sm:p-7">
-            <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-purple-100/85 sm:text-xs">
+          <div className="w-full max-w-xl rounded-3xl border border-white/15 bg-white/5 p-4 shadow-[0_24px_50px_rgba(0,0,0,0.85)] backdrop-blur-md sm:p-5">
+            <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-purple-100/85 sm:text-xs">
               E.M.I.T · EMOTION MENTORING IN TIME
             </p>
-            <p className="mb-6 text-[0.8rem] leading-relaxed text-white/85 sm:text-sm">
+            <p className="mb-3 text-[0.8rem] leading-relaxed text-white/85 sm:text-sm">
               당신의 과거, 현재, 미래의 감정을 함께 탐색할 AI 멘토와의 여정을 지금
               시작해 보세요.
             </p>
@@ -166,7 +219,7 @@ export default function Home() {
               onClick={() => router.push("/login")}
             >
               <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.3),transparent_55%),radial-gradient(circle_at_70%_60%,rgba(167,139,250,0.35),transparent_55%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-            <span className="relative z-10">여정 시작하기</span>
+              <span className="relative z-10">여정 시작하기</span>
             </motion.button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { buildMentorSystemPrompt } from "./prompt";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -13,10 +14,23 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const mode = String(body?.mode ?? "chat");
-    const mentorName = String(body?.mentorName ?? "E.M.I.T Mentor");
-    const personality = String(body?.personality ?? "차분하고 공감적인 어조");
-    const coreInsight = String(
-      body?.coreInsight ?? "당신의 감정은 이해받을 가치가 있습니다."
+    const mentorNameKr = String(body?.mentorNameKr ?? body?.mentorName ?? "멘토");
+    const mentorNameEn = String(body?.mentorNameEn ?? "Mentor");
+    const color1 = String(body?.color1 ?? "감정 A");
+    const color2 = String(body?.color2 ?? "감정 B");
+    const tonePersonality = String(
+      body?.tonePersonality ?? body?.personality ?? "차분하고 공감적인 어조"
+    );
+    const coreExperienceInsight = String(
+      body?.coreExperienceInsight ??
+        body?.coreInsight ??
+        "당신의 감정은 이해받을 가치가 있습니다."
+    );
+    const selectionReason = String(
+      body?.selectionReason ?? "당신의 감정과 닮은 삶의 굴곡이 있습니다."
+    );
+    const mission = String(
+      body?.mission ?? "감정을 삶의 방향으로 바꾸는 태도를 제안합니다."
     );
     const messages = Array.isArray(body?.messages)
       ? (body.messages as ChatMessage[])
@@ -41,9 +55,9 @@ export async function POST(req: Request) {
 
       const summaryPrompt = [
         "당신은 대화 요약 전문가입니다.",
-        `멘토 이름: ${mentorName}`,
-        `멘토 성격: ${personality}`,
-        `핵심 통찰: ${coreInsight}`,
+        `멘토 이름: ${mentorNameKr} (${mentorNameEn})`,
+        `멘토 성격: ${tonePersonality}`,
+        `핵심 통찰: ${coreExperienceInsight}`,
         "요구사항:",
         "1) 오늘 대화 핵심을 한국어 2~3문장으로 요약",
         "2) 마지막 줄에 '오늘의 문장: ...' 형식으로 한 문장 제시",
@@ -72,16 +86,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const systemPrompt = [
-      `당신은 ${mentorName} 페르소나의 AI 멘토입니다.`,
-      `반드시 성격을 반영해서 답변하세요: ${personality}`,
-      `반드시 핵심 통찰을 반영하세요: ${coreInsight}`,
-      "조건:",
-      "- 한국어로 답변",
-      "- 3~5문장 이내",
-      "- 공감 1문장 + 관찰/통찰 1~2문장 + 다음 행동 제안 1문장",
-      "- 과장된 위로 금지, 진솔하고 차분하게",
-    ].join("\n");
+    const systemPrompt = buildMentorSystemPrompt({
+      mentorNameKr,
+      mentorNameEn,
+      color1,
+      color2,
+      coreExperienceInsight,
+      tonePersonality,
+      selectionReason,
+      mission,
+    });
 
     const conversation = messages
       .slice(-10)

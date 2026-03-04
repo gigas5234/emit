@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { findMentorForColors, MentorColor } from "../emotion/mentors";
-import { Share2 } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 
 type SpeechRecognitionType =
   | (any & { continuous?: boolean; interimResults?: boolean })
@@ -161,6 +161,7 @@ function TypingText({
 }
 
 function MentorInner() {
+  const router = useRouter();
   const params = useSearchParams();
   const c1 = params.get("c1") ?? "#7C3AED";
   const c2 = params.get("c2") ?? "#3B82F6";
@@ -313,9 +314,18 @@ function MentorInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userText: text,
-          mentorName: matchedRow?.mentorNameKr ?? selectedMentor.mentorName,
-          personality: mentorPersonality,
-          coreInsight: matchedRow?.mission ?? selectedMentor.coreExperienceInsight,
+          mentorNameKr: matchedRow?.mentorNameKr ?? selectedMentor.mentorName,
+          mentorNameEn: matchedRow?.mentorNameEn ?? selectedMentor.mentorName,
+          color1: n1,
+          color2: n2,
+          tonePersonality: matchedRow?.tonePersonality ?? mentorPersonality,
+          coreExperienceInsight:
+            selectedMentor.coreExperienceInsight,
+          selectionReason:
+            matchedRow?.selectionReason ?? selectedMentor.coreExperienceInsight,
+          mission:
+            matchedRow?.mission ??
+            "이번 대화에서 감정의 원인을 구조적으로 이해하고 다음 행동을 설계합니다.",
           messages: [],
         }),
       });
@@ -512,8 +522,7 @@ function MentorInner() {
     }
     setLiveModeEnabled(false);
     setIsListening(false);
-    setIsIntroFinished(false);
-    setShareStatus("대화를 종료했어요. 필요하면 다시 시작해 주세요.");
+    router.push("/emotion");
   };
 
   const startLiveConversation = async () => {
@@ -577,9 +586,18 @@ function MentorInner() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             mode: "summary",
-            mentorName: matchedRow?.mentorNameKr ?? selectedMentor.mentorName,
-            personality: mentorPersonality,
-            coreInsight: matchedRow?.mission ?? selectedMentor.coreExperienceInsight,
+            mentorNameKr: matchedRow?.mentorNameKr ?? selectedMentor.mentorName,
+            mentorNameEn: matchedRow?.mentorNameEn ?? selectedMentor.mentorName,
+            color1: n1,
+            color2: n2,
+            tonePersonality: matchedRow?.tonePersonality ?? mentorPersonality,
+            coreExperienceInsight:
+              selectedMentor.coreExperienceInsight,
+            selectionReason:
+              matchedRow?.selectionReason ?? selectedMentor.coreExperienceInsight,
+            mission:
+              matchedRow?.mission ??
+              "이번 대화에서 감정의 원인을 구조적으로 이해하고 다음 행동을 설계합니다.",
             messages: messagesRef.current,
           }),
         });
@@ -737,17 +755,42 @@ function MentorInner() {
               exit={{ opacity: 0 }}
               className="flex min-h-[88vh] flex-col"
             >
+              <div className="mb-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleNativeShare}
+                  disabled={isSharing}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/90 backdrop-blur-md transition hover:bg-white/20 disabled:opacity-60"
+                  aria-label="이 여정 공유하기"
+                  title="이 여정 공유하기"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleEndChat}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/90 backdrop-blur-md transition hover:bg-white/20"
+                  aria-label="색 선택 화면으로 돌아가기"
+                  title="색 선택 화면으로 돌아가기"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+              </div>
+
               <div className="mb-4 mt-2 flex w-full justify-center text-center sm:mb-6">
                 <div className="relative max-w-2xl">
                   <div className="rounded-3xl border border-white/20 bg-white/10 px-4 py-3 text-sm shadow-[0_18px_45px_rgba(0,0,0,0.9)] backdrop-blur-md sm:px-6 sm:py-4 sm:text-base">
-                    {displayedText}
-                    {isThinking && (
-                      <span className="ml-1 inline-flex items-center gap-[2px] align-middle">
-                        <span className="inline-block h-[3px] w-[3px] rounded-full bg-white/80 animate-pulse" />
-                        <span className="inline-block h-[3px] w-[3px] rounded-full bg-white/60 animate-pulse [animation-delay:0.12s]" />
-                        <span className="inline-block h-[3px] w-[3px] rounded-full bg-white/40 animate-pulse [animation-delay:0.24s]" />
-                      </span>
-                    )}
+                    <div className="max-h-24 overflow-y-auto whitespace-pre-wrap leading-6 text-white/95">
+                      {displayedText}
+                      {isThinking && (
+                        <span className="ml-1 inline-flex items-center gap-[2px] align-middle">
+                          <span className="inline-block h-[3px] w-[3px] rounded-full bg-white/80 animate-pulse" />
+                          <span className="inline-block h-[3px] w-[3px] rounded-full bg-white/60 animate-pulse [animation-delay:0.12s]" />
+                          <span className="inline-block h-[3px] w-[3px] rounded-full bg-white/40 animate-pulse [animation-delay:0.24s]" />
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="absolute left-1/2 top-full h-4 w-4 -translate-x-1/2 -translate-y-[2px] rotate-45 border-b border-r border-white/20 bg-white/10 backdrop-blur-md" />
                 </div>
@@ -826,28 +869,6 @@ function MentorInner() {
                   {shareStatus}
                 </p>
               )}
-
-              <div className="mt-4 rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-md">
-                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-                  <button
-                    type="button"
-                    onClick={handleEndChat}
-                    className="inline-flex min-w-32 items-center justify-center rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white/90 shadow-[0_6px_20px_rgba(0,0,0,0.28)] transition hover:bg-white/20"
-                  >
-                    대화 종료
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleNativeShare}
-                    disabled={isSharing}
-                    className="inline-flex min-w-40 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white/95 shadow-[0_6px_20px_rgba(0,0,0,0.28)] transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    <Share2 className="h-4 w-4" />
-                    이 여정 공유하기
-                  </button>
-                </div>
-              </div>
             </motion.section>
           )}
         </AnimatePresence>
