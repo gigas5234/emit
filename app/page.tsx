@@ -110,13 +110,13 @@ export default function Home() {
 
       {/* Foreground content (no scroll layout) */}
       <section className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-8">
-        {/* 상단 로고 (중앙보다 위) */}
-        <div className="flex w-full justify-center pt-4">
+        {/* 상단 로고 (중앙보다 위, 약간 더 크게) */}
+        <div className="flex w-full justify-center pt-6">
           <motion.div
             className="relative"
             style={{ x: logoX, y: logoY }}
           >
-            <div className="relative h-32 w-32 overflow-hidden rounded-full shadow-[0_0_32px_rgba(147,51,234,0.7)] sm:h-40 sm:w-40">
+            <div className="relative h-36 w-36 overflow-hidden rounded-full shadow-[0_0_32px_rgba(147,51,234,0.7)] sm:h-48 sm:w-48">
               <Image
                 src="/00.logo.png"
                 alt="E.M.I.T Logo"
@@ -128,8 +128,8 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* 중앙 메인 카피: 위인 텍스트 페이드 인/아웃 */}
-        <div className="flex flex-1 flex-col items-center justify-center">
+        {/* 중앙 메인 카피 + 진입 박스 */}
+        <div className="flex flex-1 flex-col items-center justify-center space-y-8">
           <div className="relative h-20 w-full max-w-xl text-center">
             <AnimatePresence mode="wait">
               <motion.p
@@ -143,6 +143,28 @@ export default function Home() {
                 {mainPhrases[mainIndex]}
               </motion.p>
             </AnimatePresence>
+          </div>
+
+          {/* 진입용 글래스 박스 */}
+          <div className="w-full max-w-xl rounded-3xl border border-white/15 bg-white/5 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.85)] backdrop-blur-md sm:p-7">
+            <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-purple-100/85 sm:text-xs">
+              E.M.I.T · EMOTION MENTORING IN TIME
+            </p>
+            <p className="mb-6 text-[0.8rem] leading-relaxed text-white/85 sm:text-sm">
+              당신의 과거, 현재, 미래의 감정을 함께 탐색할 AI 멘토와의 여정을 지금
+              시작해 보세요.
+            </p>
+            <motion.button
+              whileHover={{
+                scale: 1.03,
+                boxShadow: "0 0 24px rgba(167, 139, 250, 0.85)",
+              }}
+              whileTap={{ scale: 0.98 }}
+              className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border border-purple-300/70 bg-gradient-to-r from-purple-500/90 via-purple-400/90 to-fuchsia-500/90 px-6 py-3 text-[0.8rem] font-semibold tracking-[0.2em] text-white sm:text-sm"
+            >
+              <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.3),transparent_55%),radial-gradient(circle_at_70%_60%,rgba(167,139,250,0.35),transparent_55%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <span className="relative z-10">여정 시작하기</span>
+            </motion.button>
           </div>
         </div>
 
