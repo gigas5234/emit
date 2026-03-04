@@ -117,6 +117,9 @@ function MentorChatInner() {
   const isThinkingRef = useRef(false);
   const lastSentTextRef = useRef("");
   const lastSentAtRef = useRef(0);
+  // Track how many results we've already sent — prevents re-processing old results
+  const sentUpToIndexRef = useRef(0);
+  const lastResultsLengthRef = useRef(0);
   const messagesRef = useRef<Message[]>([]);
   const shouldListenRef = useRef(false);
   const sendSpeechRef = useRef<((forced?: string) => Promise<void>) | null>(null);
@@ -207,6 +210,8 @@ function MentorChatInner() {
   const resetBuffers = () => {
     transcriptBufferRef.current = "";
     interimBufferRef.current = "";
+    sentUpToIndexRef.current = 0;
+    lastResultsLengthRef.current = 0;
     setUserText("");
   };
 
@@ -349,8 +354,10 @@ function MentorChatInner() {
       // Fall back to interim buffer if available
       const pending = rescued || `${transcriptBufferRef.current} ${interimBufferRef.current}`.trim();
       if (pending && !isThinkingRef.current) {
-        addLogRef.current?.("info", `onnomatch → interim 버퍼로 전송: "${pending}"`);
-        transcriptBufferRef.current = pending;
+        addLogRef.current?.("info", `onnomatch → 전송: "${pending}"`);
+        // Advance index and clear buffers BEFORE sending to prevent onend double-send
+        sentUpToIndexRef.current = lastResultsLengthRef.current;
+        transcriptBufferRef.current = "";
         interimBufferRef.current = "";
         sendSpeechRef.current?.(pending);
       }
@@ -358,35 +365,41 @@ function MentorChatInner() {
 
     recognition.onresult = (event: any) => {
       setSttError("");
-      let finalTranscript = "";
-      let interimTranscript = "";
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+      lastResultsLengthRef.current = event.results.length;
+
+      // Only process results we haven't consumed yet (sentUpToIndexRef)
+      // This prevents Chrome's cumulative event.results from re-sending old text
+      let finalText = "";
+      let interimText = "";
+      for (let i = sentUpToIndexRef.current; i < event.results.length; i += 1) {
         const result = event.results[i];
         const chunk = result[0]?.transcript ?? "";
         const conf = result[0]?.confidence != null
-          ? ` (신뢰도 ${(result[0].confidence * 100).toFixed(0)}%)`
+          ? ` (${(result[0].confidence * 100).toFixed(0)}%)`
           : "";
         if (result.isFinal) {
-          finalTranscript += chunk;
-          addLogRef.current?.("ok", `✅ 최종 인식: "${chunk}"${conf}`);
+          finalText += (finalText ? " " : "") + chunk;
+          addLogRef.current?.("ok", `✅ 최종: "${chunk}"${conf}`);
         } else {
-          interimTranscript += chunk;
-          addLogRef.current?.("info", `⏳ 중간 인식: "${chunk}"`);
+          interimText = chunk; // Latest interim replaces previous (no accumulation)
+          addLogRef.current?.("info", `⏳ 중간: "${chunk}"`);
         }
       }
-      transcriptBufferRef.current = `${transcriptBufferRef.current} ${finalTranscript}`.trim();
-      interimBufferRef.current = interimTranscript.trim();
-      const currentFullText = `${transcriptBufferRef.current} ${interimBufferRef.current}`
-        .trim()
-        .replace(/\s+/g, " ");
 
-      if (currentFullText) setUserText(currentFullText);
+      // REPLACE buffers (not accumulate) — rebuild fresh from sentUpToIndex each time
+      transcriptBufferRef.current = finalText;
+      interimBufferRef.current = interimText;
 
-      if (currentFullText) {
+      const fullText = `${finalText} ${interimText}`.trim().replace(/\s+/g, " ");
+      if (fullText) setUserText(fullText);
+
+      if (fullText) {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
-          addLogRef.current?.("info", `⏱ 침묵 1.5초 → API 전송: "${currentFullText}"`);
-          sendSpeechRef.current?.(currentFullText);
+          addLogRef.current?.("info", `⏱ 침묵 1.5초 → API 전송: "${fullText}"`);
+          // Advance the consumed index before sending
+          sentUpToIndexRef.current = lastResultsLengthRef.current;
+          sendSpeechRef.current?.(fullText);
           transcriptBufferRef.current = "";
           interimBufferRef.current = "";
         }, 1500);
@@ -423,8 +436,11 @@ function MentorChatInner() {
         setTimeout(() => {
           if (shouldListenRef.current) {
             try {
+              // New session: reset consumed index so fresh results are processed from 0
+              sentUpToIndexRef.current = 0;
+              lastResultsLengthRef.current = 0;
               recognition.start();
-              addLogRef.current?.("info", "↺ recognition 재시작");
+              addLogRef.current?.("info", "↺ recognition 재시작 (index 리셋)");
             } catch {
               // noop
             }
