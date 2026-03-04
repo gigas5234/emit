@@ -331,11 +331,11 @@ export default function Home() {
             </span>
           </motion.button>
 
-          <p className="font-display text-center text-[0.58rem] font-light tracking-[0.3em] text-white/28">
-            <span className="text-white/82">E</span>motions ·{" "}
-            <span className="text-white/82">M</span>entored ·{" "}
-            <span className="text-white/82">I</span>n ·{" "}
-            <span className="text-white/82">T</span>ime
+          <p className="font-display text-center text-[0.58rem] font-light tracking-[0.3em] text-white/52">
+            <span className="text-white/88">E</span>motions ·{" "}
+            <span className="text-white/88">M</span>entored ·{" "}
+            <span className="text-white/88">I</span>n ·{" "}
+            <span className="text-white/88">T</span>ime
           </p>
         </div>
 

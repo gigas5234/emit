@@ -156,6 +156,7 @@ function MentorChatInner() {
   const [sttError, setSttError] = useState("");
   const [apiError, setApiError] = useState("");
   const [speechDetected, setSpeechDetected] = useState(false);
+  const [micPermission, setMicPermission] = useState<"granted" | "denied" | "checking" | null>(null);
   const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
   const [showDebug, setShowDebug] = useState(false);
 
@@ -434,6 +435,14 @@ function MentorChatInner() {
         }
         return;
       }
+      if (err === "not-allowed" || err === "service-not-allowed") {
+        addLogRef.current?.("err", `❌ onerror: ${err} — 마이크 권한 거부됨`);
+        setMicPermission("denied");
+        setSttError("");
+        setIsListening(false);
+        shouldListenRef.current = false;
+        return;
+      }
       addLogRef.current?.("err", `❌ onerror: ${err}`);
       setSttError(err);
       setIsListening(false);
@@ -511,13 +520,42 @@ function MentorChatInner() {
     setIsListening(false);
   };
 
+  const requestMicAndStart = async () => {
+    if (!recognitionRef.current) return;
+    if (!navigator?.mediaDevices?.getUserMedia) {
+      // Old browser / non-HTTPS — just try directly
+      startListening();
+      return;
+    }
+    setMicPermission("checking");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop()); // immediately release
+      setMicPermission("granted");
+      setSttError("");
+      startListening();
+    } catch (err: any) {
+      if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+        setMicPermission("denied");
+        setSttError("");
+      } else {
+        setMicPermission(null);
+        startListening(); // unknown error — try anyway
+      }
+    }
+  };
+
   const toggleMic = () => {
     if (!recognitionRef.current) return;
     if (isListening) {
       stopListening();
       return;
     }
-    startListening();
+    if (micPermission === "granted") {
+      startListening();
+    } else {
+      requestMicAndStart();
+    }
   };
 
   const extractSummaryQuote = (raw: string) => {
@@ -725,23 +763,44 @@ function MentorChatInner() {
           <button
             type="button"
             onClick={toggleMic}
-            className="h-14 w-14 rounded-full border border-violet-200/70 bg-violet-100 text-xl shadow-[0_8px_20px_rgba(167,139,250,0.55)] transition hover:scale-105"
+            disabled={micPermission === "checking"}
+            className="h-14 w-14 rounded-full border border-violet-200/70 bg-violet-100 text-xl shadow-[0_8px_20px_rgba(167,139,250,0.55)] transition hover:scale-105 disabled:opacity-50"
           >
-            {isListening ? "🎙️" : "🎤"}
+            {micPermission === "checking" ? "⏳" : isListening ? "🎙️" : "🎤"}
           </button>
         </div>
 
-        <p className="mt-3 text-center text-[0.68rem] tracking-[0.06em] text-white/50">
-          {isThinking
-            ? <span className="text-violet-300/75">멘토가 응답을 준비하고 있습니다...</span>
-            : isListening
-            ? "음성 감지 중... 잠시 멈추면 자동으로 전달됩니다."
-            : "마이크 버튼을 눌러 대화를 시작하세요."}
-        </p>
+        {micPermission === "denied" ? (
+          <div className="mt-3 flex flex-col items-center gap-2 px-4 text-center">
+            <p className="text-[0.68rem] text-rose-300/90">
+              마이크 권한이 거부되었습니다.
+            </p>
+            <p className="text-[0.62rem] text-white/45 leading-relaxed">
+              브라우저 주소창의 🔒 아이콘을 클릭하여<br />마이크 권한을 &apos;허용&apos;으로 변경해 주세요.
+            </p>
+            <button
+              type="button"
+              onClick={requestMicAndStart}
+              className="mt-1 rounded-full border border-violet-400/50 px-4 py-1.5 text-[0.68rem] text-violet-300 transition hover:bg-violet-500/20"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : (
+          <p className="mt-3 text-center text-[0.68rem] tracking-[0.06em] text-white/50">
+            {isThinking
+              ? <span className="text-violet-300/75">멘토가 응답을 준비하고 있습니다...</span>
+              : isListening
+              ? "음성 감지 중... 잠시 멈추면 자동으로 전달됩니다."
+              : micPermission === "checking"
+              ? "마이크 권한 확인 중..."
+              : "마이크 버튼을 눌러 대화를 시작하세요."}
+          </p>
+        )}
         {(sttError || apiError) && (
           <p className="mt-1 text-center text-[0.68rem] text-rose-300/90">
             {sttError
-              ? `STT 오류: ${sttError === "not-allowed" ? "마이크 권한이 거부됨 (브라우저 설정 확인)" : sttError === "network" ? "네트워크 오류 — 인터넷 연결 확인" : sttError === "service-not-allowed" ? "이 브라우저/환경에서 STT가 비허용됨 (HTTP는 불가, HTTPS 필요)" : sttError}`
+              ? `STT 오류: ${sttError === "network" ? "네트워크 오류 — 인터넷 연결 확인" : sttError}`
               : `API 오류: ${apiError}`}
           </p>
         )}
