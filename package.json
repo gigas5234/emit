@@ -22,6 +22,7 @@
   "homepage": "https://github.com/gigas5234/emit#readme",
   "dependencies": {
     "framer-motion": "^12.34.5",
+    "lucide-react": "^0.577.0",
     "next": "^16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"

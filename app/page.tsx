@@ -3,196 +3,313 @@
 import Image from "next/image";
 import {
   motion,
-  useMotionValue,
   useTransform,
-  AnimatePresence,
+  useMotionTemplate,
+  useScroll,
 } from "framer-motion";
-import { useEffect, useState, PointerEvent } from "react";
+import { Asterisk, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
-const mainPhrases = [
-  "지금 어떤 감정을 느끼고 계신가요?",
-  "시간을 거슬러, 당신을 이해할 멘토를 만나보세요.",
-];
+type ParticleConfig = {
+  id: string;
+  kind: "dot" | "sparkle" | "asterisk";
+  xPct: number;
+  yPct: number;
+  sizePx: number;
+  opacity: number;
+  driftPx: number;
+  rotateDeg: number;
+};
 
-const teaserPhrases = [
-  "소크라테스가 누군가의 깊은 우울에 답하고 있습니다...",
-  "스티브 잡스가 새로운 영감을 불어넣고 있습니다...",
-];
+function useFadeInOut(
+  progress: ReturnType<typeof useScroll>["scrollYProgress"],
+  start: number,
+  mid: number,
+  end: number
+) {
+  return useTransform(progress, [start, mid, end], [0, 1, 0]);
+}
 
-export default function Home() {
-  const mvX = useMotionValue(0);
-  const mvY = useMotionValue(0);
+function ParticleItem({
+  p,
+  progress,
+}: {
+  p: ParticleConfig;
+  progress: ReturnType<typeof useScroll>["scrollYProgress"];
+}) {
+  const y = useTransform(progress, (v) => -v * p.driftPx);
+  const r = useTransform(progress, (v) => v * p.rotateDeg);
 
-  const bgX = useTransform(mvX, (v) => v * -0.35);
-  const bgY = useTransform(mvY, (v) => v * -0.35);
-  const logoX = useTransform(mvX, (v) => v * 0.8);
-  const logoY = useTransform(mvY, (v) => v * 0.8);
+  const baseStyle = {
+    left: `${p.xPct}%`,
+    top: `${p.yPct}%`,
+    opacity: p.opacity,
+  } as const;
 
-  const [mainIndex, setMainIndex] = useState(0);
-  const [teaserIndex, setTeaserIndex] = useState(0);
+  if (p.kind === "dot") {
+    return (
+      <motion.span
+        className="absolute rounded-full bg-white"
+        style={{
+          ...baseStyle,
+          width: p.sizePx,
+          height: p.sizePx,
+          y,
+          rotate: r,
+          boxShadow:
+            "0 0 10px rgba(167, 139, 250, 0.35), 0 0 18px rgba(255, 255, 255, 0.16)",
+        }}
+      />
+    );
+  }
+
+  const Icon = p.kind === "sparkle" ? Sparkles : Asterisk;
+  return (
+    <motion.span
+      className="absolute text-white/70"
+      style={{
+        ...baseStyle,
+        y,
+        rotate: r,
+        filter: "drop-shadow(0 0 10px rgba(167, 139, 250, 0.35))",
+      }}
+      aria-hidden="true"
+    >
+      <Icon size={p.sizePx * 6} strokeWidth={1.4} />
+    </motion.span>
+  );
+}
+
+function ParticleField({
+  progress,
+}: {
+  progress: ReturnType<typeof useScroll>["scrollYProgress"];
+}) {
+  const [particles, setParticles] = useState<ParticleConfig[]>([]);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setMainIndex((prev) => (prev + 1) % mainPhrases.length);
-    }, 3500);
-    return () => clearInterval(id);
+    const rand = (min: number, max: number) => min + Math.random() * (max - min);
+    const count = 34;
+    const icons = 7;
+
+    const dots: ParticleConfig[] = Array.from({ length: count }, (_, i) => {
+      const sizePx = Math.round(rand(1, 3));
+      const opacity = Number(rand(0.12, 0.5).toFixed(2));
+      return {
+        id: `d-${i}-${Math.random().toString(16).slice(2)}`,
+        kind: "dot",
+        xPct: Number(rand(0, 100).toFixed(2)),
+        yPct: Number(rand(0, 100).toFixed(2)),
+        sizePx,
+        opacity,
+        driftPx: Math.round(rand(220, 1200)),
+        rotateDeg: Number(rand(-60, 60).toFixed(2)),
+      };
+    });
+
+    const iconBits: ParticleConfig[] = Array.from({ length: icons }, (_, i) => {
+      const kind = Math.random() > 0.5 ? "sparkle" : "asterisk";
+      const opacity = Number(rand(0.14, 0.38).toFixed(2));
+      return {
+        id: `i-${i}-${Math.random().toString(16).slice(2)}`,
+        kind,
+        xPct: Number(rand(5, 95).toFixed(2)),
+        yPct: Number(rand(5, 95).toFixed(2)),
+        sizePx: Math.round(rand(2, 4)),
+        opacity,
+        driftPx: Math.round(rand(180, 900)),
+        rotateDeg: Number(rand(-120, 120).toFixed(2)),
+      };
+    });
+
+    setParticles([...dots, ...iconBits]);
   }, []);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTeaserIndex((prev) => (prev + 1) % teaserPhrases.length);
-    }, 4500);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!("DeviceOrientationEvent" in window)) return;
-
-    const handler = (event: DeviceOrientationEvent) => {
-      const gamma = event.gamma ?? 0;
-      const beta = event.beta ?? 0;
-      const maxTilt = 15;
-
-      const xNorm = Math.max(-maxTilt, Math.min(maxTilt, gamma)) / maxTilt;
-      const yNorm = Math.max(-maxTilt, Math.min(maxTilt, beta)) / maxTilt;
-
-      mvX.set(xNorm * 15);
-      mvY.set(yNorm * 15);
-    };
-
-    window.addEventListener("deviceorientation", handler);
-    return () => window.removeEventListener("deviceorientation", handler);
-  }, [mvX, mvY]);
-
-  const handlePointerMove = (e: PointerEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    const strength = 22;
-    mvX.set(x * strength);
-    mvY.set(y * strength);
-  };
-
-  const handlePointerLeave = () => {
-    mvX.set(0);
-    mvY.set(0);
-  };
 
   return (
-    <main
-      className="relative min-h-screen w-full overflow-hidden bg-black text-white"
-      onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
-    >
-      <motion.div
-        className="pointer-events-none absolute inset-0"
-        style={{ x: bgX, y: bgY }}
-      >
-        <Image
-          src="/01.back_img.png"
-          alt="Cosmic background"
-          fill
-          priority
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,transparent_0%,black_80%)] mix-blend-multiply" />
-      </motion.div>
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {particles.map((p) => (
+        <ParticleItem key={p.id} p={p} progress={progress} />
+      ))}
+    </div>
+  );
+}
 
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(147,51,234,0.45),transparent_55%),radial-gradient(circle_at_20%_80%,rgba(96,165,250,0.35),transparent_60%)]" />
+export default function Home() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
 
-      <section className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-6">
-        <div className="h-10 sm:h-12" />
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.28]);
+  const bgBlur = useTransform(scrollYProgress, [0, 1], [0, 10]);
+  const bgDim = useTransform(scrollYProgress, [0, 1], [0.15, 0.55]);
+  const bgFilter = useMotionTemplate`blur(${bgBlur}px) saturate(1.15)`;
 
-        <div className="flex flex-1 flex-col items-center justify-center space-y-6 text-center">
+  const logoRotate = useTransform(scrollYProgress, [0, 1], [0, -720]);
+  const logoScale = useTransform(scrollYProgress, [0, 0.25, 1], [1, 0.98, 0.92]);
+
+  const hook1Opacity = useFadeInOut(scrollYProgress, 0.05, 0.12, 0.2);
+  const hook2Opacity = useFadeInOut(scrollYProgress, 0.18, 0.28, 0.4);
+
+  const mentorOpacity = useFadeInOut(scrollYProgress, 0.38, 0.52, 0.68);
+  const mentorScale = useTransform(scrollYProgress, [0.38, 0.52, 0.68], [1.05, 1, 0.98]);
+
+  const mentorTextOpacity = useFadeInOut(scrollYProgress, 0.42, 0.56, 0.7);
+
+  const portalOpacity = useTransform(scrollYProgress, [0.78, 0.92, 1], [0, 0.9, 1]);
+  const portalScale = useTransform(scrollYProgress, [0.78, 1], [0.9, 1.3]);
+  const portalBlur = useTransform(scrollYProgress, [0.78, 1], [8, 0]);
+  const portalFilter = useMotionTemplate`blur(${portalBlur}px)`;
+
+  const ctaOpacity = useTransform(scrollYProgress, [0.84, 0.92], [0, 1]);
+  const ctaY = useTransform(scrollYProgress, [0.84, 0.92], [18, 0]);
+
+  return (
+    <main className="relative w-full bg-black text-white">
+      <div ref={containerRef} className="relative h-[520vh] overflow-hidden">
+        <div className="sticky top-0 h-screen w-full">
+          {/* Base background: parallax diving */}
           <motion.div
-            className="relative"
-            style={{ x: logoX, y: logoY }}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              transition: { duration: 1.2, ease: "easeOut" },
-            }}
+            className="absolute inset-0"
+            style={{ scale: bgScale, filter: bgFilter }}
+            aria-hidden="true"
           >
-            <div className="relative h-40 w-40 rounded-full bg-gradient-to-b from-white/40 to-white/5 p-[2px] shadow-[0_0_40px_rgba(147,51,234,0.75)] sm:h-52 sm:w-52">
-              <div className="relative h-full w-full overflow-hidden rounded-full bg-black/60">
-                <Image
-                  src="/00.logo.png"
-                  alt="E.M.I.T Logo"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            </div>
+            <Image
+              src="/01.back_img.png"
+              alt="Deep space nebula background"
+              fill
+              priority
+              className="object-cover"
+            />
+            <motion.div
+              className="absolute inset-0 bg-black"
+              style={{ opacity: bgDim }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_25%,rgba(147,51,234,0.38),transparent_56%),radial-gradient(circle_at_20%_80%,rgba(96,165,250,0.24),transparent_62%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,transparent_0%,black_82%)] mix-blend-multiply" />
           </motion.div>
 
-          <div className="relative h-16 overflow-hidden sm:h-20">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={mainIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.7, ease: "easeOut" }}
-                className="px-6 text-sm leading-relaxed text-white/90 drop-shadow-[0_0_12px_rgba(0,0,0,0.9)] sm:text-base"
-              >
-                {mainPhrases[mainIndex]}
-              </motion.p>
-            </AnimatePresence>
-          </div>
-        </div>
+          {/* Particles depth layer */}
+          <ParticleField progress={scrollYProgress} />
 
-        <div className="mb-16 flex w-full items-center justify-center sm:mb-20">
+          {/* Mentor silhouette emerges (mid-scroll) */}
           <motion.div
-            className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_32px_80px_rgba(0,0,0,0.8)] backdrop-blur-md"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.9, ease: "easeOut" }}
+            className="pointer-events-none absolute inset-0"
+            style={{ opacity: mentorOpacity }}
+            aria-hidden="true"
           >
-            <div className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-purple-200/70">
-              E.M.I.T · Emotion Mentoring In Time
-            </div>
-            <p className="mb-6 text-sm text-white/80">
-              당신의 과거, 현재, 미래의 감정을 함께 탐색할 AI 멘토와의 여정을
-              지금 시작해 보세요.
-            </p>
+            <motion.div
+              className="absolute inset-0"
+              style={{ scale: mentorScale }}
+            >
+              <Image
+                src="/02.mentor_shadow.png"
+                alt="Mentor silhouette"
+                fill
+                className="object-cover object-center"
+                priority={false}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/55" />
+            </motion.div>
+          </motion.div>
 
-            <motion.button
-              whileHover={{
-                scale: 1.04,
-                boxShadow: "0 0 24px rgba(167, 139, 250, 0.8)",
-              }}
-              whileTap={{ scale: 0.97 }}
-              className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border border-purple-300/60 bg-gradient-to-r from-purple-500/70 via-purple-400/80 to-fuchsia-500/80 px-6 py-3 text-sm font-semibold tracking-[0.18em] text-white shadow-[0_16px_40px_rgba(0,0,0,0.9)]"
-              onClick={() => {
-                // TODO: use router.push("/login") when login page is ready
+          {/* Portal climax (final) */}
+          <motion.div
+            className="pointer-events-none absolute inset-0"
+            style={{ opacity: portalOpacity }}
+            aria-hidden="true"
+          >
+            <motion.div
+              className="absolute inset-0"
+              style={{
+                scale: portalScale,
+                filter: portalFilter,
               }}
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-white/20 via-white/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <span className="relative z-10">여정 시작하기</span>
-            </motion.button>
+              <Image
+                src="/03.portal_light.png"
+                alt="Cosmic portal light"
+                fill
+                className="object-cover object-center mix-blend-screen"
+                priority={false}
+              />
+              <div className="absolute inset-0 bg-black/25" />
+            </motion.div>
           </motion.div>
+
+          {/* Foreground UI (sticky logo + scroll-driven text) */}
+          <div className="relative z-10 flex h-full w-full items-center justify-center px-4">
+            <div className="flex w-full max-w-3xl flex-col items-center text-center">
+              {/* Sticky logo with scroll-driven rotation */}
+              <motion.div
+                className="relative"
+                style={{ rotate: logoRotate, scale: logoScale }}
+              >
+                <div className="relative h-40 w-40 overflow-hidden rounded-full shadow-[0_0_46px_rgba(147,51,234,0.72)] sm:h-56 sm:w-56">
+                  <Image
+                    src="/00.logo.png"
+                    alt="E.M.I.T Logo"
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+              </motion.div>
+
+              {/* Storytelling hooks (scroll-fade) */}
+              <div className="relative mt-6 h-14 w-full sm:mt-8 sm:h-16">
+                <motion.p
+                  className="absolute inset-x-0 top-0 px-6 text-sm leading-relaxed text-white/90 drop-shadow-[0_0_14px_rgba(0,0,0,0.95)] sm:text-base"
+                  style={{ opacity: hook1Opacity }}
+                >
+                  지금 어떤 감정을 느끼고 계신가요?
+                </motion.p>
+                <motion.p
+                  className="absolute inset-x-0 top-0 px-6 text-sm leading-relaxed text-white/90 drop-shadow-[0_0_14px_rgba(0,0,0,0.95)] sm:text-base"
+                  style={{ opacity: hook2Opacity }}
+                >
+                  시간을 거슬러, 당신을 이해할 멘토를 만나보세요.
+                </motion.p>
+              </div>
+
+              {/* Mid-scroll mentor text */}
+              <motion.div className="mt-10" style={{ opacity: mentorTextOpacity }}>
+                <p className="text-xs font-medium uppercase tracking-[0.32em] text-purple-200/75">
+                  E.M.I.T · Emotion Mentoring In Time
+                </p>
+                <p className="mt-3 text-sm text-white/80">
+                  때로는 시대를 초월한 지혜가...
+                </p>
+              </motion.div>
+
+              {/* CTA glass button at the portal center */}
+              <motion.div
+                className="mt-12"
+                style={{ opacity: ctaOpacity, y: ctaY }}
+              >
+                <motion.button
+                  whileHover={{
+                    scale: 1.04,
+                    boxShadow: "0 0 26px rgba(167, 139, 250, 0.85)",
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group relative inline-flex items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-9 py-4 text-sm font-semibold tracking-[0.2em] text-white backdrop-blur-md"
+                >
+                  <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.22),transparent_55%),radial-gradient(circle_at_70%_60%,rgba(167,139,250,0.22),transparent_55%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <span className="relative z-10">여정 시작하기</span>
+                </motion.button>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* subtle bottom fade */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
         </div>
 
-        <div className="pointer-events-none relative mb-1 flex h-10 w-full items-end justify-center text-xs text-white/60">
-          <div className="relative h-8 overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={teaserIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 0.6, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.7, ease: "easeOut" }}
-                className="px-6 text-center text-[0.65rem] sm:text-[0.7rem]"
-              >
-                {teaserPhrases[teaserIndex]}
-              </motion.p>
-            </AnimatePresence>
-          </div>
-        </div>
-      </section>
+        {/* Scroll spacer content (invisible; drives scroll progress) */}
+        <div className="absolute left-0 top-0 h-full w-full" aria-hidden="true" />
+      </div>
     </main>
   );
 }
