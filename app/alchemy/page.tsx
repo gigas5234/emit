@@ -29,9 +29,9 @@ function AlchemyInner() {
     const timers: NodeJS.Timeout[] = [];
 
     timers.push(
-      setTimeout(() => setMsgIndex(1), 2200),
-      setTimeout(() => setMsgIndex(2), 4400),
-      setTimeout(() => router.push("/mentor"), 7000)
+      setTimeout(() => setMsgIndex(1), 1000),
+      setTimeout(() => setMsgIndex(2), 2000),
+      setTimeout(() => router.push("/mentor"), 3000)
     );
 
     return () => {
