@@ -225,7 +225,7 @@ export default function Home() {
             className="text-[0.7rem] tracking-[0.48em] text-white/60 sm:text-[0.78rem]"
             style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
           >
-            Emotion · Moment · In · Time
+            Emotions · Mentored · In · Time
           </p>
         </motion.div>
         <motion.div className="mb-10 text-center" style={{ x: copyX, y: copyY }}>
@@ -233,7 +233,7 @@ export default function Home() {
             className="text-[0.58rem] tracking-[0.36em] text-white/38 sm:text-[0.64rem]"
             style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
           >
-            당신의 시간 속에 머무는 감정의 궤도
+            시간을 넘어온 위인의 지혜가 당신의 감정을 마주합니다.
           </p>
         </motion.div>
 
@@ -351,10 +351,10 @@ export default function Home() {
           </motion.button>
 
           <p
-            className="text-center text-[0.6rem] tracking-[0.22em] text-white/42"
+            className="text-center text-[0.58rem] tracking-[0.3em] text-white/32"
             style={{ fontFamily: "'Cormorant Garamond','Garamond',Georgia,serif", fontWeight: 300 }}
           >
-            과거의 지혜가 당신의 현재를 비춥니다
+            Emotions · Mentored · In · Time
           </p>
         </div>
 
