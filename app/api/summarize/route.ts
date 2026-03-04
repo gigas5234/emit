@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const mentorNameKr = String(body?.mentorNameKr ?? "멘토");
     const mentorNameEn = String(body?.mentorNameEn ?? "Mentor");
+    const mentorId = body?.mentorId ? String(body.mentorId) : undefined;
     const color1 = String(body?.color1 ?? "감정 A");
     const color2 = String(body?.color2 ?? "감정 B");
     const messages = Array.isArray(body?.messages)
@@ -69,6 +70,7 @@ export async function POST(req: Request) {
     const id = crypto.randomUUID();
     setShareSummary({
       id,
+      mentorId,
       mentorNameKr,
       mentorNameEn,
       color1,

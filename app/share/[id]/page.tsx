@@ -7,6 +7,7 @@ import { Share2, RefreshCw } from "lucide-react";
 
 type ShareSummaryPayload = {
   id: string;
+  mentorId?: string;
   mentorNameKr: string;
   mentorNameEn: string;
   color1: string;
@@ -15,6 +16,13 @@ type ShareSummaryPayload = {
   emotionKeyword: string;
   summary: string;
 };
+
+function getMentorImage(id: string | undefined): string {
+  if (!id) return "/mentors/sample.png";
+  const num = parseInt(id, 10);
+  if (isNaN(num) || num < 1 || num > 21) return "/mentors/sample.png";
+  return `/mentors/${String(num).padStart(2, "0")}.png`;
+}
 
 export default function SharePage({
   params,
@@ -95,13 +103,28 @@ export default function SharePage({
               </p>
 
               <div className="mt-4 flex justify-center">
-                <Image
-                  src="/mentors/sample.png"
-                  alt="Mentor"
-                  width={180}
-                  height={180}
-                  className="h-36 w-auto"
-                />
+                <div
+                  className="relative overflow-hidden rounded-2xl"
+                  style={{ width: 140, height: 180, isolation: "isolate" }}
+                >
+                  <div
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.85) 0%, rgba(130,75,255,0.4) 50%, transparent 80%)",
+                    }}
+                  />
+                  <Image
+                    src={getMentorImage(data.mentorId)}
+                    alt="Mentor"
+                    fill
+                    style={{
+                      objectFit: "cover",
+                      objectPosition: "center 5%",
+                      mixBlendMode: "multiply",
+                    }}
+                  />
+                </div>
               </div>
 
               <p className="mt-3 text-sm font-semibold text-white/80">

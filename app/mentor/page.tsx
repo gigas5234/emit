@@ -73,6 +73,13 @@ function parseMentorsCsv(csv: string): MentorCsvRow[] {
   });
 }
 
+function getMentorImage(id: string | undefined): string {
+  if (!id) return "/mentors/sample.png";
+  const num = parseInt(id, 10);
+  if (isNaN(num) || num < 1 || num > 21) return "/mentors/sample.png";
+  return `/mentors/${String(num).padStart(2, "0")}.png`;
+}
+
 function MentorIntroInner() {
   const router = useRouter();
   const params = useSearchParams();
@@ -166,17 +173,34 @@ function MentorIntroInner() {
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-              className="relative"
             >
-              <div className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-violet-400/20 blur-3xl" />
-              <Image
-                src="/mentors/sample.png"
-                alt="Mentor figure"
-                width={380}
-                height={380}
-                priority
-                className="h-64 w-auto sm:h-80"
-              />
+              <div
+                className="relative overflow-hidden rounded-3xl"
+                style={{
+                  width: 220,
+                  height: 300,
+                  isolation: "isolate",
+                }}
+              >
+                {/* Glow layer — provides the light backdrop for mix-blend-multiply */}
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background: `radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.88) 0%, ${c1}55 45%, ${c2}30 65%, transparent 85%)`,
+                  }}
+                />
+                <Image
+                  src={getMentorImage(matchedRow?.id)}
+                  alt="Mentor figure"
+                  fill
+                  priority
+                  style={{
+                    objectFit: "cover",
+                    objectPosition: "center 5%",
+                    mixBlendMode: "multiply",
+                  }}
+                />
+              </div>
             </motion.div>
           </div>
 

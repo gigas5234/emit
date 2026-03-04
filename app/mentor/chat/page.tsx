@@ -15,6 +15,7 @@ type Message = { role: "user" | "assistant"; content: string };
 type DebugLog = { time: string; type: "info" | "ok" | "warn" | "err"; msg: string };
 
 type MentorCsvRow = {
+  id: string;
   color1: string;
   color2: string;
   mentorNameKr: string;
@@ -71,6 +72,7 @@ function parseMentorsCsv(csv: string): MentorCsvRow[] {
     .map((line) => {
       const c = parseCsvLine(line);
       return {
+        id: c[0] ?? "",
         color1: c[1] ?? "",
         color2: c[2] ?? "",
         mentorNameKr: c[3] ?? "",
@@ -80,6 +82,13 @@ function parseMentorsCsv(csv: string): MentorCsvRow[] {
         tonePersonality: c[7] ?? "",
       };
     });
+}
+
+function getMentorImage(id: string | undefined): string {
+  if (!id) return "/mentors/sample.png";
+  const num = parseInt(id, 10);
+  if (isNaN(num) || num < 1 || num > 21) return "/mentors/sample.png";
+  return `/mentors/${String(num).padStart(2, "0")}.png`;
 }
 
 function MentorChatInner() {
@@ -499,6 +508,7 @@ function MentorChatInner() {
         body: JSON.stringify({
           mentorNameKr: matchedRow?.mentorNameKr ?? selectedMentor.mentorName,
           mentorNameEn: matchedRow?.mentorNameEn ?? selectedMentor.mentorName,
+          mentorId: matchedRow?.id,
           color1: n1,
           color2: n2,
           messages,
@@ -580,14 +590,33 @@ function MentorChatInner() {
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Image
-                src="/mentors/sample.png"
-                alt="Mentor figure"
-                width={360}
-                height={360}
-                priority
-                className="h-60 w-auto sm:h-72"
-              />
+              <div
+                className="relative overflow-hidden rounded-3xl"
+                style={{
+                  width: 200,
+                  height: 260,
+                  isolation: "isolate",
+                }}
+              >
+                {/* Glow layer — provides light backdrop for mix-blend-multiply */}
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background: `radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.85) 0%, ${c1}55 45%, ${c2}30 65%, transparent 85%)`,
+                  }}
+                />
+                <Image
+                  src={getMentorImage(matchedRow?.id)}
+                  alt="Mentor figure"
+                  fill
+                  priority
+                  style={{
+                    objectFit: "cover",
+                    objectPosition: "center 5%",
+                    mixBlendMode: "multiply",
+                  }}
+                />
+              </div>
             </motion.div>
           </div>
         </div>

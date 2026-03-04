@@ -1,5 +1,6 @@
 export type ShareSummaryPayload = {
   id: string;
+  mentorId?: string;
   mentorNameKr: string;
   mentorNameEn: string;
   color1: string;
