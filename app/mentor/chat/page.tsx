@@ -111,15 +111,11 @@ function MentorChatInner() {
   const [showDebug, setShowDebug] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognitionType>(null);
-  const transcriptBufferRef = useRef("");
-  const interimBufferRef = useRef("");
+  const lastTranscriptRef = useRef(""); // Only the latest recognized text
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isThinkingRef = useRef(false);
   const lastSentTextRef = useRef("");
   const lastSentAtRef = useRef(0);
-  // Track how many results we've already sent — prevents re-processing old results
-  const sentUpToIndexRef = useRef(0);
-  const lastResultsLengthRef = useRef(0);
   const messagesRef = useRef<Message[]>([]);
   const shouldListenRef = useRef(false);
   const sendSpeechRef = useRef<((forced?: string) => Promise<void>) | null>(null);
@@ -208,15 +204,12 @@ function MentorChatInner() {
   }, []);
 
   const resetBuffers = () => {
-    transcriptBufferRef.current = "";
-    interimBufferRef.current = "";
-    // NOTE: sentUpToIndexRef is intentionally NOT reset here.
-    // It tracks consumed results across the session and must only reset on session start/stop.
+    lastTranscriptRef.current = "";
     setUserText("");
   };
 
   const sendCurrentSpeech = async (forced?: string) => {
-    const text = (forced ?? `${transcriptBufferRef.current} ${interimBufferRef.current}`)
+    const text = (forced ?? lastTranscriptRef.current)
       .trim()
       .replace(/\s+/g, " ");
     if (!text) {
@@ -326,7 +319,7 @@ function MentorChatInner() {
     recognition.onspeechstart = () => {
       setSpeechDetected(true);
       addLogRef.current?.("ok", "🎤 onspeechstart — 발화 감지됨 ✓");
-      // User started speaking again — cancel any pending send from previous utterance
+      // Cancel any pending send — user is still speaking
       if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = null;
@@ -335,98 +328,52 @@ function MentorChatInner() {
 
     recognition.onspeechend = () => {
       setSpeechDetected(false);
-      addLogRef.current?.("info", "🔇 onspeechend — 발화 종료, 전송 준비 중...");
-      // Wait 600ms for Chrome to produce the final result after speech ends, then send ONCE
+      addLogRef.current?.("info", "🔇 onspeechend — 발화 종료, 전송 대기 중...");
+      // Wait 500ms for Chrome to emit the final result, then send the last recognized text once
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = setTimeout(() => {
         silenceTimerRef.current = null;
-        const toSend = [transcriptBufferRef.current, interimBufferRef.current]
-          .filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+        const toSend = lastTranscriptRef.current.trim();
         if (!toSend || isThinkingRef.current) return;
         addLogRef.current?.("info", `📤 onspeechend → 전송: "${toSend}"`);
-        sentUpToIndexRef.current = lastResultsLengthRef.current;
         sendSpeechRef.current?.(toSend);
-        transcriptBufferRef.current = "";
-        interimBufferRef.current = "";
-      }, 600);
+        lastTranscriptRef.current = "";
+      }, 500);
     };
 
-    recognition.onnomatch = (event: any) => {
-      // Try to rescue low-confidence alternatives from the event
-      let rescued = "";
-      try {
-        for (let i = 0; i < (event?.results?.length ?? 0); i += 1) {
-          const t = event.results[i][0]?.transcript?.trim();
-          const conf = event.results[i][0]?.confidence ?? 0;
-          if (t) {
-            rescued = t;
-            addLogRef.current?.("warn", `onnomatch 저신뢰도 결과: "${t}" (${(conf * 100).toFixed(0)}%)`);
-            break;
-          }
-        }
-      } catch { /* noop */ }
-
-      if (!rescued) {
-        addLogRef.current?.("warn", "⚠ onnomatch — 인식 결과 없음 (오디오 품질 또는 네트워크 확인)");
-      }
-
-      // Fall back to interim buffer if available
-      const pending = rescued || `${transcriptBufferRef.current} ${interimBufferRef.current}`.trim();
+    recognition.onnomatch = () => {
+      addLogRef.current?.("warn", "⚠ onnomatch — 인식 결과 없음 (오디오 품질 또는 네트워크 확인)");
+      // Send whatever we last recognized if available
+      const pending = lastTranscriptRef.current.trim();
       if (pending && !isThinkingRef.current) {
-        addLogRef.current?.("info", `onnomatch → 전송: "${pending}"`);
-        // Advance index and clear buffers BEFORE sending to prevent onend double-send
-        sentUpToIndexRef.current = lastResultsLengthRef.current;
-        transcriptBufferRef.current = "";
-        interimBufferRef.current = "";
+        addLogRef.current?.("info", `onnomatch → 마지막 인식 전송: "${pending}"`);
+        lastTranscriptRef.current = "";
         sendSpeechRef.current?.(pending);
       }
     };
 
     recognition.onresult = (event: any) => {
       setSttError("");
-      lastResultsLengthRef.current = event.results.length;
+      // Always take the LAST result in the array — it is the most complete and up-to-date
+      const last = event.results[event.results.length - 1];
+      const text = (last[0]?.transcript ?? "").trim();
+      if (!text) return;
 
-      // Pass 1: consume any NEW final results (advance sentUpToIndexRef as we go)
-      // Finals are the source of truth — accumulate them into transcriptBufferRef
-      for (let i = sentUpToIndexRef.current; i < event.results.length; i += 1) {
-        if (event.results[i].isFinal) {
-          const chunk = (event.results[i][0]?.transcript ?? "").trim();
-          const conf = event.results[i][0]?.confidence != null
-            ? ` (${(event.results[i][0].confidence * 100).toFixed(0)}%)`
-            : "";
-          if (chunk) {
-            transcriptBufferRef.current = transcriptBufferRef.current
-              ? `${transcriptBufferRef.current} ${chunk}`
-              : chunk;
-            addLogRef.current?.("ok", `✅ 최종: "${chunk}"${conf}`);
-          }
-          sentUpToIndexRef.current = i + 1; // mark this result as consumed
-        }
-      }
+      lastTranscriptRef.current = text; // overwrite — we only ever want the latest
+      setUserText(text);
 
-      // Pass 2: get the current interim result (latest non-final, for display only)
-      // Interim is NEVER sent — it's only shown so the user gets real-time feedback
-      let interimText = "";
-      if (event.results.length > sentUpToIndexRef.current) {
-        const last = event.results[event.results.length - 1];
-        if (!last.isFinal) {
-          interimText = (last[0]?.transcript ?? "").trim();
-          interimBufferRef.current = interimText;
-          if (interimText) addLogRef.current?.("info", `⏳ 중간(표시용): "${interimText}"`);
-        }
+      if (last.isFinal) {
+        const conf = last[0]?.confidence != null
+          ? ` (${(last[0].confidence * 100).toFixed(0)}%)`
+          : "";
+        addLogRef.current?.("ok", `✅ 최종: "${text}"${conf}`);
       } else {
-        interimBufferRef.current = "";
+        addLogRef.current?.("info", `⏳ 인식 중: "${text}"`);
       }
-
-      // Display only — NO send timer here.
-      // Sending is triggered exclusively by onspeechend (one send per utterance).
-      const displayText = (interimText || transcriptBufferRef.current).replace(/\s+/g, " ").trim();
-      if (displayText) setUserText(displayText);
     };
 
     recognition.onerror = (event: any) => {
       const err = String(event?.error ?? "음성 인식 오류");
-      // aborted / no-speech are non-fatal — auto-restart if user still wants to listen
       if (err === "aborted" || err === "no-speech") {
         addLogRef.current?.("warn", `⚠ onerror(${err}) — 자동 재시작 시도`);
         if (shouldListenRef.current) {
@@ -445,34 +392,25 @@ function MentorChatInner() {
     };
 
     recognition.onend = () => {
-      // Cancel any pending onspeechend timer (onend supersedes it)
+      // Cancel any pending onspeechend timer
       if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = null;
       }
-      const pending = `${transcriptBufferRef.current} ${interimBufferRef.current}`.trim();
+      const pending = lastTranscriptRef.current.trim();
       addLogRef.current?.("warn", `■ onend — 미전송 텍스트: "${pending || "(없음)"}", shouldListen=${shouldListenRef.current}`);
-      // Only send if there's something left (onspeechend may have already sent it)
       if (pending && !isThinkingRef.current) {
-        sentUpToIndexRef.current = lastResultsLengthRef.current;
         sendSpeechRef.current?.(pending);
-        transcriptBufferRef.current = "";
-        interimBufferRef.current = "";
+        lastTranscriptRef.current = "";
       }
 
-      // Auto-restart recognition if user still wants to be listening
       if (shouldListenRef.current) {
         setTimeout(() => {
           if (shouldListenRef.current) {
             try {
-              // New session: reset consumed index so fresh results are processed from 0
-              sentUpToIndexRef.current = 0;
-              lastResultsLengthRef.current = 0;
               recognition.start();
-              addLogRef.current?.("info", "↺ recognition 재시작 (index 리셋)");
-            } catch {
-              // noop
-            }
+              addLogRef.current?.("info", "↺ recognition 재시작");
+            } catch { /* noop */ }
           }
         }, 300);
       } else {
@@ -499,9 +437,6 @@ function MentorChatInner() {
       return;
     }
     shouldListenRef.current = true;
-    // Reset session-level index on new mic session
-    sentUpToIndexRef.current = 0;
-    lastResultsLengthRef.current = 0;
     resetBuffers();
     try {
       recognitionRef.current.start();
@@ -516,10 +451,8 @@ function MentorChatInner() {
     if (!recognitionRef.current) return;
     shouldListenRef.current = false;
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    lastTranscriptRef.current = "";
     setSpeechDetected(false);
-    // Reset index when session ends
-    sentUpToIndexRef.current = 0;
-    lastResultsLengthRef.current = 0;
     try {
       recognitionRef.current.stop();
       addLogRef.current?.("info", "■ recognition.stop() 호출됨");
