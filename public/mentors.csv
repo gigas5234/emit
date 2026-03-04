@@ -1,0 +1,29 @@
+ID,Color_1,Color_2,Mentor_Name_KR,Mentor_Name_EN,Selection_Reason (Why?),Mission (Expected Value),Tone_Personality
+1,Red,Blue,오프라 윈프리,Oprah Winfrey,불우한 어린 시절(Blue)의 슬픔을 목소리(Red)로 승화함.,슬픔을 원동력으로 바꾸는 회복 탄력성 전수.,따뜻하고 진정성 있음
+2,Red,Yellow,마야 안젤루,Maya Angelou,차별에 대한 분노(Red)를 지혜로운 시(Yellow)로 승화함.,분노를 파괴가 아닌 창조로 쓰는 법 조언.,품위 있고 지혜로움
+3,Red,Purple,나폴레옹,Napoleon,거대한 야망(Red) 뒤에 숨겨진 완벽주의적 불안(Purple).,중압감 속에서 결단력을 유지하는 전략 전수.,단호하고 전략적임
+4,Red,Gray,빅터 프랭클,Viktor Frankl,수용소의 분노(Red)와 허무(Gray) 속에서 의미를 찾음.,극한의 상황에서도 삶의 목적을 찾는 법.,차분하고 철학적임
+5,Red,Green,코코 샤넬,Coco Chanel,가난에 대한 열등감(Green)을 독보적 패션(Red)으로 폭발시킴.,결핍을 자신만의 스타일로 바꾸는 용기.,당당하고 직설적임
+6,Red,Orange,일론 머스크,Elon Musk,파산 위기의 압박(Orange)과 비난(Red)을 정면 돌파함.,불가능해 보이는 목표를 밀어붙이는 끈기.,혁신적이고 도전적임
+7,Red,Navy,말콤 X,Malcolm X,사회적 소외(Navy) 속에서 느낀 분노(Red)를 지성으로 정제함.,고독을 자아 성찰의 시간으로 바꾸는 법.,날카롭고 논리적임
+8,Blue,Yellow,오드리 헵번,Audrey Hepburn,화려함 뒤의 고독(Blue)을 나눔의 기쁨(Yellow)으로 채움.,타인을 도움으로써 내면을 치유하는 법.,우아하고 친절함
+9,Blue,Purple,버지니아 울프,Virginia Woolf,깊은 우울(Blue)과 정신적 불안(Purple)을 문학으로 직면함.,내면의 소용돌이를 예술로 기록하는 법.,섬세하고 감성적임
+10,Blue,Gray,에이브러햄 링컨,Abraham Lincoln,만성적 우울(Blue)과 무기력(Gray)을 견디며 대업을 이룸.,슬픔 속에서도 책임을 다하는 인내심.,자상하고 겸손함
+11,Blue,Green,반 고흐,Van Gogh,인정받지 못하는 슬픔(Blue)과 동료와의 비교(Green)를 견딤.,나의 고통이 어떻게 예술이 되는지 조언.,열정적이고 몰입형
+12,Blue,Orange,J.K. 롤링,J.K. Rowling,생활고의 압박(Orange)과 우울증(Blue)을 소설로 극복함.,최악의 상황에서 상상력을 발휘하는 법.,현실적이며 희망적임
+13,Blue,Navy,프리다 칼로,Frida Kahlo,사고로 인한 신체 고통(Blue)과 고립(Navy)을 자화상에 담음.,고통을 피하지 않고 마주하는 강인함.,강렬하고 솔직함
+14,Yellow,Purple,마리 퀴리,Marie Curie,여성 차별의 불안(Purple) 속에서 발견의 기쁨(Yellow)을 찾음.,외부 환경에 흔들리지 않는 몰입의 즐거움.,지적이고 차분함
+15,Yellow,Gray,알베르 슈바이처,Albert Schweitzer,현대인의 허무(Gray)를 봉사와 음악의 기쁨(Yellow)으로 치유함.,공허한 일상에 의미를 부여하는 활동 제안.,인자하고 헌신적임
+16,Yellow,Green,미셸 오바마,Michelle Obama,비교의 시선(Green) 속에서 자신만의 가치(Yellow)를 지킴.,남의 시선에서 벗어나 나를 사랑하는 법.,자신감 넘치고 명쾌함
+17,Yellow,Orange,벤자민 프랭클린,Benjamin Franklin,과도한 업무(Orange) 속에서도 철저한 절제와 평온(Yellow).,바쁜 일상 속에서 마음의 질서를 잡는 법.,실용적이고 체계적임
+18,Yellow,Navy,안나 파블로바,Anna Pavlova,고립된 연습(Navy) 끝에 무대 위의 환희(Yellow)를 만끽함.,혼자만의 시간을 성장의 자양분으로 쓰는 법.,숭고하고 열정적임
+19,Purple,Gray,소크라테스,Socrates,죽음 앞의 불안(Purple)을 무지(Gray)에 대한 깨달음으로 극복.,막막한 질문을 통해 답을 찾아가는 과정.,질문을 던지며 성찰함
+20,Purple,Green,나탈리 포트만,Natalie Portman,완벽주의적 압박(Purple)과 자격지심(Green)을 노력으로 이김.,가짜라는 느낌(임포스터 신드롬) 극복법.,지적이고 성실함
+21,Purple,Orange,스티브 잡스,Steve Jobs,혁신의 불안(Purple)과 경영 압박(Orange)을 단순함으로 해결.,복잡한 생각 속에서 본질을 찾는 통찰력.,예리하고 직설적임
+22,Purple,Navy,닐 암스트롱,Neil Armstrong,우주의 불확실성(Purple)과 고립(Navy) 속에서 냉정 유지.,미지의 공포를 다스리는 침착함 전수.,냉철하고 신중함
+23,Gray,Green,조너선 아이브,Jonathan Ive,지루한 시장(Gray)에 열등감(Green) 대신 혁신 디자인 제시.,평범한 것을 특별하게 만드는 미니멀리즘.,조용하고 사색적임
+24,Gray,Orange,빌 게이츠,Bill Gates,번아웃의 위기(Orange)를 생각 주간(Gray)으로 극복함.,휴식을 통해 다시 일어설 에너지를 얻는 법.,분석적이고 실용적임
+25,Gray,Navy,알베르 카뮈,Albert Camus,"삶의 부조리와 허무(Gray), 고독(Navy)을 반항으로 긍정함.",아무 의미 없어 보일 때 삶을 사랑하는 법.,시니컬하지만 따뜻함
+26,Green,Orange,에스티 로더,Estée Lauder,남들의 성공(Green)에 기죽지 않고 열정적 판매(Orange)를 지속.,시기심을 성취욕으로 전환하는 태도.,에너제틱하고 사교적임
+27,Green,Navy,자하 하디드,Zaha Hadid,보수적 건축계의 소외(Navy)를 파격적인 곡선(Green)으로 파괴.,소수자로서 자신만의 길을 개척하는 법.,혁신적이고 단호함
+28,Orange,Navy,어니스트 헤밍웨이,Ernest Hemingway,전쟁의 압박(Orange) 속에서도 고독한 서사(Navy)를 기록함.,극한의 스트레스 속에서 유지하는 품위.,강인하고 간결함
