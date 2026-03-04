@@ -264,8 +264,9 @@ function MentorChatInner() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const errMsg = String(data?.error ?? `HTTP ${res.status}`);
-        addLogRef.current?.("err", `API 오류 ${res.status}: ${errMsg}`);
-        setApiError(errMsg);
+        const errDetails = String(data?.details ?? "");
+        addLogRef.current?.("err", `API 오류 ${res.status}: ${errMsg}${errDetails ? ` — ${errDetails}` : ""}`);
+        setApiError(errDetails ? `${errMsg}: ${errDetails}` : errMsg);
         setMentorText("잠시 연결이 불안정합니다. 다시 한 번 말씀해 주시겠어요?");
       } else {
         const reply = String(data?.reply ?? "").trim();
@@ -399,9 +400,10 @@ function MentorChatInner() {
         interimBufferRef.current = "";
       }
 
-      // Display = accumulated finals + current interim
-      const displayText = [transcriptBufferRef.current, interimText]
-        .filter(Boolean).join(" ").replace(/\s+/g, " ");
+      // Display: show only the LATEST text to avoid showing accumulated duplicates.
+      // Priority: current interim (real-time) > latest final chunk > nothing
+      // This way the user sees just what's being recognized right now, not the whole history.
+      const displayText = (interimText || transcriptBufferRef.current).replace(/\s+/g, " ").trim();
       if (displayText) setUserText(displayText);
 
       // Silence timer: reset on every result, fires only after the user stops speaking
