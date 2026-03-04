@@ -6,6 +6,34 @@ interface LiquidOrbProps {
   colors: string[];
 }
 
+function hexToRgb(hex: string): [number, number, number] | null {
+  const normalized = hex.replace("#", "");
+  if (![3, 6].includes(normalized.length)) return null;
+  const full =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : normalized;
+  const num = parseInt(full, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return [r, g, b];
+}
+
+function softenColor(hex: string, mixWithWhiteRatio = 0.55) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const [r, g, b] = rgb;
+  const mix = mixWithWhiteRatio;
+  const nr = Math.round(r * (1 - mix) + 255 * mix);
+  const ng = Math.round(g * (1 - mix) + 255 * mix);
+  const nb = Math.round(b * (1 - mix) + 255 * mix);
+  return `rgba(${nr}, ${ng}, ${nb}, 0.9)`;
+}
+
 export function LiquidOrb({ colors }: LiquidOrbProps) {
   const level =
     colors.length === 0 ? "10%" : colors.length === 1 ? "40%" : "80%";
@@ -13,7 +41,10 @@ export function LiquidOrb({ colors }: LiquidOrbProps) {
   const base = colors[0] ?? "#5b21ff";
   const secondary = colors[1] ?? colors[0] ?? "#22d3ee";
 
-  const gradient = `linear-gradient(135deg, ${base} 0%, ${secondary} 45%, ${base} 80%, ${secondary} 100%)`;
+  const baseSoft = softenColor(base);
+  const secondarySoft = softenColor(secondary);
+
+  const gradient = `linear-gradient(135deg, ${baseSoft} 0%, ${secondarySoft} 35%, ${baseSoft} 70%, ${secondarySoft} 100%)`;
 
   return (
     <div className="relative mx-auto flex h-[260px] w-[260px] items-center justify-center sm:h-[300px] sm:w-[300px]">
