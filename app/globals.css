@@ -10,3 +10,67 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Liquid orb animations */
+.liquid-orb-fill {
+  position: absolute;
+}
+
+.liquid-orb-wave {
+  position: absolute;
+  left: -25%;
+  bottom: -10%;
+  width: 150%;
+  height: 200%;
+  border-radius: 45%;
+  filter: blur(1px);
+  animation: liquidWave 7s infinite linear;
+}
+
+.liquid-orb-wave--delay {
+  animation-duration: 10s;
+  animation-delay: -3s;
+}
+
+.liquid-orb-bubbles {
+  position: absolute;
+  inset: 0;
+}
+
+.liquid-orb-bubble {
+  position: absolute;
+  bottom: -10%;
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.8);
+  opacity: 0;
+  filter: blur(0.5px);
+  animation: liquidBubble 5s infinite ease-in;
+}
+
+@keyframes liquidWave {
+  0% {
+    transform: translateX(0%) translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateX(-20%) translateY(8px) rotate(0deg);
+  }
+  100% {
+    transform: translateX(0%) translateY(0px) rotate(0deg);
+  }
+}
+
+@keyframes liquidBubble {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, -140px, 0);
+    opacity: 0;
+  }
+}
+

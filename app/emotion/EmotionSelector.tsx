@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { CosmicBottle } from "./CosmicBottle";
 import { EmotionCard, Emotion } from "./EmotionCard";
+import { LiquidOrb } from "./LiquidOrb";
 
 type EmotionKey =
   | "anger"
@@ -87,6 +87,8 @@ export default function EmotionSelector() {
     .map((key) => EMOTIONS.find((e) => e.key === key)?.color)
     .filter(Boolean) as string[];
 
+  const canProceed = selected.length === 2;
+
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-black text-white">
       {/* background */}
@@ -128,18 +130,18 @@ export default function EmotionSelector() {
 
         {/* main content */}
         <div className="flex flex-1 flex-col px-5 pb-6 sm:px-8 sm:pb-10">
-          {/* bottle area */}
+          {/* orb area */}
           <section className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:items-start sm:gap-10">
             <div className="text-center sm:text-left">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-purple-100/85 sm:text-sm">
-                The Cosmic Bottle
+                Emotion Mix
               </p>
               <p className="mt-2 max-w-xs text-[0.8rem] text-white/80 sm:text-sm">
-                지금 당신의 감정을 두 가지까지 선택해 보세요. 병 안에서 섞이는
-                색이 오늘의 정서 지도를 만들어 줍니다.
+                지금 당신의 감정을 두 가지까지 선택해 보세요. 섞인 색을 바탕으로,
+                당신의 마음을 가장 잘 이해해 줄 멘토를 찾아 드립니다.
               </p>
             </div>
-            <CosmicBottle colors={selectedColors} />
+            <LiquidOrb colors={selectedColors} />
           </section>
 
           {/* emotion grid */}
@@ -169,14 +171,28 @@ export default function EmotionSelector() {
           {/* CTA */}
           <section className="mt-6 flex justify-center">
             <motion.button
-              whileHover={{
-                scale: 1.03,
-                boxShadow: "0 0 28px rgba(167,139,250,0.9)",
-              }}
+              whileHover={
+                canProceed
+                  ? {
+                      scale: 1.03,
+                      boxShadow: "0 0 28px rgba(167,139,250,0.9)",
+                    }
+                  : undefined
+              }
               whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center justify-center rounded-full border border-purple-300/70 bg-gradient-to-r from-purple-500/90 via-purple-400/90 to-fuchsia-500/90 px-8 py-3 text-xs font-semibold tracking-[0.24em] text-white shadow-[0_18px_45px_rgba(0,0,0,0.9)] sm:text-sm"
+              disabled={!canProceed}
+              className={`
+                inline-flex items-center justify-center rounded-full border px-8 py-3 text-xs font-semibold tracking-[0.24em] sm:text-sm
+                ${
+                  canProceed
+                    ? "border-purple-300/70 bg-gradient-to-r from-purple-500/90 via-purple-400/90 to-fuchsia-500/90 text-white shadow-[0_18px_45px_rgba(0,0,0,0.9)]"
+                    : "border-white/15 bg-white/5 text-white/60 shadow-none cursor-not-allowed"
+                }
+              `}
             >
-              과거로의 여정 시작하기
+              {canProceed
+                ? "이 감정을 이해할 멘토 만나기"
+                : "감정을 두 가지 선택해 주세요"}
             </motion.button>
           </section>
         </div>
