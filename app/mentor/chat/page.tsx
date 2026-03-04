@@ -23,6 +23,8 @@ type MentorCsvRow = {
   tonePersonality: string;
 };
 
+const CHAT_HISTORY_STORAGE_KEY = "emit-chat-history";
+
 const HEX_TO_COLOR: Record<string, MentorColor> = {
   "#FF0000": "Red",
   "#0000FF": "Blue",
@@ -98,6 +100,7 @@ function MentorChatInner() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [sttError, setSttError] = useState("");
@@ -157,6 +160,25 @@ function MentorChatInner() {
   useEffect(() => {
     isThinkingRef.current = isThinking;
   }, [isThinking]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.sessionStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as Message[];
+      if (Array.isArray(parsed) && parsed.length) {
+        setMessages(parsed);
+      }
+    } catch {
+      // noop
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(messages));
+  }, [messages]);
 
   useEffect(() => {
     setDisplayedText("");
@@ -288,19 +310,32 @@ function MentorChatInner() {
 
     recognition.onresult = (event: any) => {
       setSttError("");
-      let interim = "";
+      let finalTranscript = "";
+      let interimTranscript = "";
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
         const result = event.results[i];
         const chunk = result[0]?.transcript ?? "";
-        if (result.isFinal) transcriptBufferRef.current = `${transcriptBufferRef.current} ${chunk}`.trim();
-        else interim += chunk;
+        if (result.isFinal) {
+          finalTranscript += chunk;
+        } else {
+          interimTranscript += chunk;
+        }
       }
-      interimBufferRef.current = interim.trim();
-      const preview = `${transcriptBufferRef.current} ${interimBufferRef.current}`.trim();
-      if (preview) setUserText(preview);
-      if (preview) {
+      transcriptBufferRef.current = `${transcriptBufferRef.current} ${finalTranscript}`.trim();
+      interimBufferRef.current = interimTranscript.trim();
+      const currentFullText = `${transcriptBufferRef.current} ${interimBufferRef.current}`
+        .trim()
+        .replace(/\s+/g, " ");
+
+      if (currentFullText) setUserText(currentFullText);
+
+      if (currentFullText) {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-        silenceTimerRef.current = setTimeout(() => sendCurrentSpeech(preview), 1000);
+        silenceTimerRef.current = setTimeout(() => {
+          sendCurrentSpeech(currentFullText);
+          transcriptBufferRef.current = "";
+          interimBufferRef.current = "";
+        }, 1500);
       }
     };
 
@@ -326,20 +361,30 @@ function MentorChatInner() {
     };
   }, [matchedRow, selectedMentor, n1, n2, mentorPersonality]);
 
-  const toggleMic = () => {
+  const startListening = () => {
     if (!recognitionRef.current) return;
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      return;
-    }
-    resetBuffers();
     try {
+      resetBuffers();
       recognitionRef.current.start();
       setIsListening(true);
     } catch {
       // noop
     }
+  };
+
+  const stopListening = () => {
+    if (!recognitionRef.current) return;
+    recognitionRef.current.stop();
+    setIsListening(false);
+  };
+
+  const toggleMic = () => {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      stopListening();
+      return;
+    }
+    startListening();
   };
 
   const extractSummaryQuote = (raw: string) => {
@@ -386,6 +431,35 @@ function MentorChatInner() {
     router.push("/emotion");
   };
 
+  const handleEndJourney = async () => {
+    if (!messages.length || isEnding) return;
+    setIsEnding(true);
+    try {
+      const res = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mentorNameKr: matchedRow?.mentorNameKr ?? selectedMentor.mentorName,
+          mentorNameEn: matchedRow?.mentorNameEn ?? selectedMentor.mentorName,
+          color1: n1,
+          color2: n2,
+          messages,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(String(data?.error ?? `HTTP ${res.status}`));
+      if (data?.id) {
+        router.push(`/share/${data.id}`);
+      } else {
+        throw new Error("invalid summarize response");
+      }
+    } catch {
+      setApiError("대화 요약 생성에 실패했습니다.");
+    } finally {
+      setIsEnding(false);
+    }
+  };
+
   const waveformBars = Array.from({ length: 24 }, (_, i) => i);
 
   return (
@@ -399,21 +473,32 @@ function MentorChatInner() {
         <div className="mb-2 flex items-center justify-between">
           <button
             type="button"
-            onClick={handleNativeShare}
-            disabled={isSharing}
+            onClick={handleGoBack}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/90 backdrop-blur-md transition hover:bg-white/20 disabled:opacity-60"
-            aria-label="이 여정 공유하기"
+            aria-label="색 선택 화면으로 돌아가기"
           >
-            <Share2 className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" />
           </button>
 
           <button
             type="button"
-            onClick={handleGoBack}
+            onClick={handleNativeShare}
+            disabled={isSharing}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/90 backdrop-blur-md transition hover:bg-white/20"
-            aria-label="색 선택 화면으로 돌아가기"
+            aria-label="이 여정 공유하기"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <Share2 className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mb-2 flex justify-center">
+          <button
+            type="button"
+            onClick={handleEndJourney}
+            disabled={isEnding || messages.length === 0}
+            className="rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-[0.72rem] font-semibold tracking-[0.08em] text-white/90 backdrop-blur-md transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-55"
+          >
+            {isEnding ? "요약 생성 중..." : "여정 종료"}
           </button>
         </div>
 
