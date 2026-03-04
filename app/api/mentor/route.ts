@@ -98,11 +98,13 @@ export async function POST(req: Request) {
     });
 
     const conversation = messages
-      .slice(-10)
-      .map((m) => `${m.role === "assistant" ? "멘토" : "사용자"}: ${m.content}`)
+      .slice(-12)
+      .map((m) => `${m.role === "assistant" ? mentorNameKr : "상대방"}: ${m.content}`)
       .join("\n");
 
-    const prompt = `${systemPrompt}\n\n이전 대화:\n${conversation}\n\n사용자 최신 발화: ${userText}\n멘토 답변:`;
+    const prompt = conversation
+      ? `${systemPrompt}\n\n[지금까지의 대화]\n${conversation}\n\n상대방: ${userText}\n${mentorNameKr}:`
+      : `${systemPrompt}\n\n상대방: ${userText}\n${mentorNameKr}:`;
     const result = await model.generateContent(prompt);
     const reply =
       result.response.text()?.trim() ??
