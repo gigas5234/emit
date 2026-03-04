@@ -18,6 +18,20 @@ type EmotionKey =
   | "overwhelm"
   | "isolation";
 
+const MENTOR_COLOR_BY_EMOTION: Record<
+  EmotionKey,
+  "Red" | "Blue" | "Yellow" | "Purple" | "Gray" | "Green" | "Orange" | "Navy"
+> = {
+  anger: "Red",
+  sadness: "Blue",
+  calm: "Yellow",
+  anxiety: "Purple",
+  apathy: "Gray",
+  comparison: "Green",
+  overwhelm: "Orange",
+  isolation: "Navy",
+};
+
 const EMOTIONS: Emotion[] = [
   {
     key: "anger",
@@ -105,6 +119,8 @@ export default function EmotionSelector() {
       c2,
       n1,
       n2,
+      m1: MENTOR_COLOR_BY_EMOTION[k1],
+      m2: MENTOR_COLOR_BY_EMOTION[k2],
     });
     router.push(`/alchemy?${params.toString()}`);
   };

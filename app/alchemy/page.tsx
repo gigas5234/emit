@@ -20,6 +20,8 @@ function AlchemyInner() {
   const c2 = search.get("c2") ?? "#7C3AED";
   const n1 = search.get("n1") ?? "감정 A";
   const n2 = search.get("n2") ?? "감정 B";
+  const m1 = search.get("m1") ?? "Purple";
+  const m2 = search.get("m2") ?? "Blue";
 
   const colors = useMemo(() => [c1, c2], [c1, c2]);
 
@@ -31,13 +33,16 @@ function AlchemyInner() {
     timers.push(
       setTimeout(() => setMsgIndex(1), 1000),
       setTimeout(() => setMsgIndex(2), 2000),
-      setTimeout(() => router.push("/mentor"), 3000)
+      setTimeout(() => {
+        const params = new URLSearchParams({ c1, c2, n1, n2, m1, m2 });
+        router.push(`/mentor?${params.toString()}`);
+      }, 3000)
     );
 
     return () => {
       timers.forEach(clearTimeout);
     };
-  }, [router]);
+  }, [router, c1, c2, n1, n2, m1, m2]);
 
   const currentMessage = useMemo(() => {
     const fn = MESSAGES_TEMPLATE[msgIndex] ?? MESSAGES_TEMPLATE[0];
