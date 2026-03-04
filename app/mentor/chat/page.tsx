@@ -602,19 +602,35 @@ function MentorChatInner() {
         </div>
 
         <div className="mb-4 mt-2 flex w-full justify-center text-center sm:mb-6">
-          <div className="relative max-w-2xl">
-            <div className="rounded-3xl border border-white/20 bg-white/10 px-4 py-3 text-sm shadow-[0_18px_45px_rgba(0,0,0,0.9)] backdrop-blur-md sm:px-6 sm:py-4 sm:text-base">
-              <div className="max-h-24 overflow-y-auto whitespace-pre-wrap leading-6 text-white/95">
-                {displayedText}
-                {isThinking && (
-                  <span className="ml-1 inline-flex items-center gap-[2px] align-middle">
-                    <span className="inline-block h-[3px] w-[3px] rounded-full bg-white/80 animate-pulse" />
-                    <span className="inline-block h-[3px] w-[3px] rounded-full bg-white/60 animate-pulse [animation-delay:0.12s]" />
-                    <span className="inline-block h-[3px] w-[3px] rounded-full bg-white/40 animate-pulse [animation-delay:0.24s]" />
+          <div className="relative max-w-2xl w-full">
+            <motion.div
+              className="rounded-3xl border px-4 py-3 text-sm backdrop-blur-md sm:px-6 sm:py-4 sm:text-base"
+              animate={isThinking
+                ? { borderColor: "rgba(167,139,250,0.45)", backgroundColor: "rgba(167,139,250,0.08)", boxShadow: "0 0 28px rgba(167,139,250,0.18), 0 18px 45px rgba(0,0,0,0.9)" }
+                : { borderColor: "rgba(255,255,255,0.20)", backgroundColor: "rgba(255,255,255,0.10)", boxShadow: "0 18px 45px rgba(0,0,0,0.9)" }
+              }
+              transition={{ duration: 0.4 }}
+            >
+              {isThinking ? (
+                <div className="flex items-center justify-center gap-3 py-0.5">
+                  <span className="text-[0.78rem] tracking-wide text-violet-300/80">생각하고 있어요</span>
+                  <span className="flex items-end gap-1.5">
+                    {[0, 1, 2].map((i) => (
+                      <motion.span
+                        key={i}
+                        className="block h-2 w-2 rounded-full bg-violet-300"
+                        animate={{ y: [0, -9, 0], opacity: [0.35, 1, 0.35] }}
+                        transition={{ duration: 0.72, repeat: Infinity, delay: i * 0.18, ease: "easeInOut" }}
+                      />
+                    ))}
                   </span>
-                )}
-              </div>
-            </div>
+                </div>
+              ) : (
+                <div className="max-h-24 overflow-y-auto whitespace-pre-wrap leading-6 text-white/95">
+                  {displayedText}
+                </div>
+              )}
+            </motion.div>
             <div className="absolute left-1/2 top-full h-4 w-4 -translate-x-1/2 -translate-y-[2px] rotate-45 border-b border-r border-white/20 bg-white/10 backdrop-blur-md" />
           </div>
         </div>
@@ -625,8 +641,18 @@ function MentorChatInner() {
               {matchedRow?.mentorNameKr ?? selectedMentor.mentorName}
             </p>
             <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              animate={isThinking
+                ? { scale: [1, 1.035, 1] }
+                : { y: [0, -10, 0] }
+              }
+              transition={isThinking
+                ? { duration: 1.1, repeat: Infinity, ease: "easeInOut" }
+                : { duration: 3, repeat: Infinity, ease: "easeInOut" }
+              }
+              style={isThinking
+                ? { filter: "drop-shadow(0 0 18px rgba(196,132,252,0.7)) drop-shadow(0 0 40px rgba(167,139,250,0.38))" }
+                : {}
+              }
             >
               <Image
                 src={instantImageSrc}
@@ -700,7 +726,9 @@ function MentorChatInner() {
         </div>
 
         <p className="mt-3 text-center text-[0.7rem] text-white/55">
-          {isListening
+          {isThinking
+            ? <span className="text-violet-300/80">멘토가 응답을 준비하고 있습니다...</span>
+            : isListening
             ? "음성 감지 중... 잠시 멈추면 자동으로 멘토에게 전달됩니다."
             : "대기 중... 마이크 버튼을 눌러 대화를 시작하세요."}
         </p>
