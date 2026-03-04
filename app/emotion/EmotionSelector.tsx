@@ -205,7 +205,7 @@ export default function EmotionSelector() {
                 inline-flex items-center justify-center rounded-full border px-8 py-3 text-xs font-semibold tracking-[0.24em] sm:text-sm
                 ${
                   canProceed
-                    ? "border-purple-300/70 bg-gradient-to-r from-purple-500/90 via-purple-400/90 to-fuchsia-500/90 text-white shadow-[0_18px_45px_rgba(0,0,0,0.9)]"
+                    ? "border-purple-200/80 bg-gradient-to-r from-purple-400 via-fuchsia-500 to-rose-500 text-white shadow-[0_18px_45px_rgba(0,0,0,0.9)]"
                     : "border-white/15 bg-white/5 text-white/60 shadow-none cursor-not-allowed"
                 }
               `}

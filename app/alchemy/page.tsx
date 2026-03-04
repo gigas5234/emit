@@ -83,21 +83,7 @@ function AlchemyInner() {
         </div>
       </motion.div>
 
-      {/* mentor silhouettes emerging */}
-      <motion.div
-        className="pointer-events-none relative mt-4 flex w-full max-w-4xl items-end justify-center"
-        initial={{ opacity: 0, scale: 0.9, y: 40 }}
-        animate={{ opacity: 1, scale: 1.02, y: 0 }}
-        transition={{ delay: 3.2, duration: 1.4, ease: "easeOut" }}
-      >
-        <Image
-          src="/05.silhouette.png"
-          alt="Mentor silhouettes"
-          width={1024}
-          height={512}
-          className="h-auto w-full max-w-3xl object-contain opacity-80 mix-blend-screen"
-        />
-      </motion.div>
+      {/* 실루엣은 현재 연출에서 제외 */}
     </>
   );
 }

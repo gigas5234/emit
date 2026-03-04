@@ -35,6 +35,13 @@ function softenColor(hex: string, mixWithWhiteRatio = 0.55) {
   return `rgba(${nr}, ${ng}, ${nb}, 0.9)`;
 }
 
+function toRgba(hex: string, alpha = 0.85) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const [r, g, b] = rgb;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function LiquidOrb({ colors }: LiquidOrbProps) {
   const level =
     colors.length === 0 ? "10%" : colors.length === 1 ? "40%" : "80%";
@@ -42,10 +49,10 @@ export function LiquidOrb({ colors }: LiquidOrbProps) {
   const base = colors[0] ?? "#5b21ff";
   const secondary = colors[1] ?? colors[0] ?? "#22d3ee";
 
-  const baseSoft = softenColor(base);
-  const secondarySoft = softenColor(secondary);
+  const baseColor = toRgba(base, 0.9);
+  const secondaryColor = toRgba(secondary, 0.9);
 
-  const gradient = `linear-gradient(135deg, ${baseSoft} 0%, ${secondarySoft} 35%, ${baseSoft} 70%, ${secondarySoft} 100%)`;
+  const gradient = `linear-gradient(135deg, ${baseColor} 0%, ${secondaryColor} 30%, ${baseColor} 65%, ${secondaryColor} 100%)`;
 
   const tiltX = useMotionValue(0);
   const tiltY = useMotionValue(0);
