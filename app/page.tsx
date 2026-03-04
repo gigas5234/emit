@@ -122,65 +122,37 @@ export default function Home() {
       <section className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-4 sm:py-8">
         {/* 상단 로고 재구성 */}
         <div className="flex w-full flex-col items-center justify-center pt-3 sm:pt-5">
+          {/* TIME -> E.M.I.T (위치: 로고 위, 단순 전환) */}
+          <div className="mb-3 mt-1 h-8 sm:mb-4">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={timeRewind ? "emit" : "time"}
+                initial={{ opacity: 0, y: 4, filter: "blur(2px)" }}
+                animate={{ opacity: 0.9, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -4, filter: "blur(2px)" }}
+                transition={{ duration: 0.55, ease: "easeOut" }}
+                className="text-[0.72rem] font-semibold uppercase tracking-[0.38em] text-violet-100/90"
+              >
+                {timeRewind ? "E.M.I.T" : "TIME REWIND"}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+
+          {/* 로고: 네모 배경 감추기 위해 원형 클립 */}
           <motion.div
             className="relative"
             style={{ x: logoX, y: logoY }}
           >
-            <div className="relative h-44 w-44 overflow-hidden shadow-[0_18px_44px_rgba(0,0,0,0.82)] sm:h-56 sm:w-56">
+            <div className="relative h-44 w-44 overflow-hidden rounded-full shadow-[0_18px_44px_rgba(0,0,0,0.82)] sm:h-56 sm:w-56">
               <Image
                 src="/00.logo.png"
                 alt="E.M.I.T Logo"
                 fill
                 priority
-                className="object-contain"
+                className="object-cover"
               />
             </div>
           </motion.div>
-
-          {/* TIME -> EMIT 리와인드 모션 (강화) */}
-          <div className="mt-2 flex min-h-[3.3rem] flex-col items-center justify-center sm:mt-3">
-            <motion.span
-              className="mb-1 text-[0.62rem] uppercase tracking-[0.42em] text-violet-200/80"
-              animate={{
-                opacity: [0.35, 0.9, 0.35],
-                letterSpacing: ["0.35em", "0.48em", "0.35em"],
-              }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            >
-              Time Rewind
-            </motion.span>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={timeRewind ? "emit" : "time"}
-                initial={{ opacity: 0, y: 10, rotateX: -55, filter: "blur(6px)" }}
-                animate={{ opacity: 1, y: 0, rotateX: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: -10, rotateX: 50, filter: "blur(7px)" }}
-                transition={{ duration: 0.7, ease: "easeOut" }}
-                className="flex items-center justify-center gap-1 [perspective:700px]"
-              >
-                {(timeRewind ? ["E", "M", "I", "T"] : ["T", "I", "M", "E"]).map((ch, idx) => (
-                  <motion.span
-                    key={`${ch}-${idx}-${timeRewind ? "emit" : "time"}`}
-                    initial={{
-                      opacity: 0,
-                      y: 12,
-                      rotateY: timeRewind ? -85 : 85,
-                      scale: 0.82,
-                    }}
-                    animate={{ opacity: 1, y: 0, rotateY: 0, scale: 1 }}
-                    transition={{
-                      duration: 0.55,
-                      delay: idx * 0.07,
-                      ease: [0.2, 0.9, 0.25, 1],
-                    }}
-                    className="inline-block text-[1.02rem] font-bold tracking-[0.22em] text-purple-100 drop-shadow-[0_0_14px_rgba(192,132,252,0.75)] sm:text-[1.12rem]"
-                  >
-                    {ch}
-                  </motion.span>
-                ))}
-              </motion.div>
-            </AnimatePresence>
-          </div>
         </div>
 
         {/* 중앙 메인 카피 + 진입 박스 */}
