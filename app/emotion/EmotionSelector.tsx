@@ -220,10 +220,11 @@ export default function EmotionSelector() {
               whileTap={{ scale: 0.97 }}
               disabled={!canProceed}
               className="inline-flex items-center justify-center rounded-full border px-8 py-3.5 text-xs tracking-[0.2em] transition-all sm:text-sm"
-              style={{ fontFamily: "system-ui, 'Noto Sans KR', sans-serif", fontWeight: 400 }}
               style={
                 canProceed
                   ? {
+                      fontFamily: "system-ui, 'Noto Sans KR', sans-serif",
+                      fontWeight: 400,
                       background: `linear-gradient(135deg, ${selectedColors[0]} 0%, ${selectedColors[1]} 100%)`,
                       borderColor: "rgba(255,255,255,0.35)",
                       color: "#fff",
@@ -231,6 +232,8 @@ export default function EmotionSelector() {
                       boxShadow: `0 0 24px ${selectedColors[0]}88, 0 0 48px ${selectedColors[1]}55, 0 8px 32px rgba(0,0,0,0.7)`,
                     }
                   : {
+                      fontFamily: "system-ui, 'Noto Sans KR', sans-serif",
+                      fontWeight: 400,
                       borderColor: "rgba(255,255,255,0.12)",
                       background: "rgba(255,255,255,0.05)",
                       color: "rgba(255,255,255,0.45)",
