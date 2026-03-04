@@ -9,9 +9,6 @@ import {
 } from "framer-motion";
 import { useEffect, useState, PointerEvent } from "react";
 
-import backImg from "../asset/01.back_img.png";
-import logoImg from "../asset/00.logo.png";
-
 const mainPhrases = [
   "지금 어떤 감정을 느끼고 계신가요?",
   "시간을 거슬러, 당신을 이해할 멘토를 만나보세요.",
@@ -93,7 +90,7 @@ export default function Home() {
         style={{ x: bgX, y: bgY }}
       >
         <Image
-          src={backImg}
+          src="/01.back_img.png"
           alt="Cosmic background"
           fill
           priority
@@ -121,7 +118,7 @@ export default function Home() {
             <div className="relative h-40 w-40 rounded-full bg-gradient-to-b from-white/40 to-white/5 p-[2px] shadow-[0_0_40px_rgba(147,51,234,0.75)] sm:h-52 sm:w-52">
               <div className="relative h-full w-full overflow-hidden rounded-full bg-black/60">
                 <Image
-                  src={logoImg}
+                  src="/00.logo.png"
                   alt="E.M.I.T Logo"
                   fill
                   className="object-cover"
