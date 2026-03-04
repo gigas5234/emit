@@ -106,7 +106,7 @@ function MentorChatInner() {
   const [shareStatus, setShareStatus] = useState("");
   const [sttError, setSttError] = useState("");
   const [apiError, setApiError] = useState("");
-  const [audioLevel, setAudioLevel] = useState(0);
+  const [speechDetected, setSpeechDetected] = useState(false);
   const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
   const [showDebug, setShowDebug] = useState(false);
 
@@ -114,11 +114,6 @@ function MentorChatInner() {
   const transcriptBufferRef = useRef("");
   const interimBufferRef = useRef("");
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
-  const rafRef = useRef<number | null>(null);
   const isThinkingRef = useRef(false);
   const lastSentTextRef = useRef("");
   const lastSentAtRef = useRef(0);
@@ -202,61 +197,12 @@ function MentorChatInner() {
     return () => clearInterval(id);
   }, [mentorText]);
 
-  // Audio context cleanup on unmount only
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      if (audioCtxRef.current) audioCtxRef.current.close();
-      if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach((t) => t.stop());
     };
   }, []);
-
-  const startWaveform = () => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    const tick = () => {
-      if (!analyserRef.current || !dataArrayRef.current) return;
-      analyserRef.current.getByteTimeDomainData(dataArrayRef.current as any);
-      let sum = 0;
-      for (let i = 0; i < dataArrayRef.current.length; i += 1) {
-        const v = (dataArrayRef.current[i] - 128) / 128;
-        sum += v * v;
-      }
-      const rms = Math.sqrt(sum / dataArrayRef.current.length);
-      setAudioLevel((prev) => prev * 0.72 + Math.min(1, rms * 3.4) * 0.28);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    tick();
-  };
-
-  const stopWaveform = () => {
-    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-    setAudioLevel(0);
-  };
-
-  // Called lazily on first mic press — avoids mic conflict with Web Speech API
-  const ensureAudioContext = async (): Promise<boolean> => {
-    if (mediaStreamRef.current && audioCtxRef.current) return true;
-    try {
-      addLogRef.current?.("info", "마이크 권한 요청 중...");
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      addLogRef.current?.("ok", "마이크 권한 허용됨 ✓");
-      mediaStreamRef.current = stream;
-      const ctx = new AudioContext();
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      const source = ctx.createMediaStreamSource(stream);
-      source.connect(analyser);
-      audioCtxRef.current = ctx;
-      analyserRef.current = analyser;
-      dataArrayRef.current = new Uint8Array(analyser.fftSize);
-      return true;
-    } catch (e: any) {
-      addLogRef.current?.("err", `마이크 권한 거부: ${e?.message ?? e}`);
-      setSttError("마이크 권한이 필요합니다.");
-      return false;
-    }
-  };
 
   const resetBuffers = () => {
     transcriptBufferRef.current = "";
@@ -364,7 +310,7 @@ function MentorChatInner() {
     };
 
     recognition.onaudiostart = () => {
-      addLogRef.current?.("ok", "🎵 onaudiostart — STT가 오디오 수신 중 ✓");
+      addLogRef.current?.("ok", "🎵 onaudiostart — STT 오디오 수신 중 ✓");
     };
 
     recognition.onaudioend = () => {
@@ -372,10 +318,12 @@ function MentorChatInner() {
     };
 
     recognition.onspeechstart = () => {
-      addLogRef.current?.("ok", "🎤 onspeechstart — 발화 감지됨");
+      setSpeechDetected(true);
+      addLogRef.current?.("ok", "🎤 onspeechstart — 발화 감지됨 ✓");
     };
 
     recognition.onspeechend = () => {
+      setSpeechDetected(false);
       addLogRef.current?.("info", "🔇 onspeechend — 발화 종료");
     };
 
@@ -453,7 +401,7 @@ function MentorChatInner() {
         if (shouldListenRef.current) {
           setTimeout(() => {
             if (shouldListenRef.current) {
-              try { recognition.start(); startWaveform(); } catch { /* noop */ }
+              try { recognition.start(); } catch { /* noop */ }
             }
           }, 300);
         }
@@ -476,7 +424,6 @@ function MentorChatInner() {
           if (shouldListenRef.current) {
             try {
               recognition.start();
-              startWaveform();
               addLogRef.current?.("info", "↺ recognition 재시작");
             } catch {
               // noop
@@ -484,8 +431,8 @@ function MentorChatInner() {
           }
         }, 300);
       } else {
+        setSpeechDetected(false);
         setIsListening(false);
-        stopWaveform();
       }
     };
 
@@ -501,16 +448,11 @@ function MentorChatInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startListening = async () => {
+  const startListening = () => {
     if (!recognitionRef.current) {
       addLogRef.current?.("err", "❌ startListening: recognitionRef가 null");
       return;
     }
-    // Init audio context lazily on first mic press to avoid conflict with Web Speech API
-    const ok = await ensureAudioContext();
-    if (!ok) return;
-    startWaveform();
-
     shouldListenRef.current = true;
     resetBuffers();
     try {
@@ -526,7 +468,7 @@ function MentorChatInner() {
     if (!recognitionRef.current) return;
     shouldListenRef.current = false;
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    stopWaveform();
+    setSpeechDetected(false);
     try {
       recognitionRef.current.stop();
       addLogRef.current?.("info", "■ recognition.stop() 호출됨");
@@ -707,18 +649,32 @@ function MentorChatInner() {
 
         <div className="mb-2 flex h-14 w-full items-center justify-center gap-1 rounded-2xl border border-white/10 bg-black/40 px-3 backdrop-blur-md">
           {waveformBars.map((bar) => {
-            const base = 20 + ((bar * 7) % 24);
-            const level = Math.min(100, base + audioLevel * 75);
+            // Each bar gets a unique rhythm via prime-multiplied offsets
+            const seed = (bar * 37) % 100;
+            const duration = speechDetected
+              ? 0.18 + (seed % 30) / 100          // fast: 0.18–0.48s
+              : isListening
+              ? 0.7 + (seed % 50) / 100            // idle: 0.7–1.2s
+              : 1.4 + (seed % 60) / 100;           // off: 1.4–2.0s
+            const delay = (seed % 40) / 100;
+            const loHgt = speechDetected ? `${15 + seed % 15}%` : `${10 + seed % 8}%`;
+            const hiHgt = speechDetected
+              ? `${55 + seed % 35}%`
+              : isListening ? `${22 + seed % 14}%` : `${14 + seed % 6}%`;
             return (
               <motion.span
                 key={bar}
                 className="block w-1 rounded-full"
                 animate={{
-                  height: `${level}%`,
-                  backgroundColor: isThinking ? "#c084fc" : "#67e8f9",
-                  opacity: isListening ? 0.9 : 0.45,
+                  height: [loHgt, hiHgt, loHgt],
+                  backgroundColor: isThinking ? "#c084fc" : speechDetected ? "#38bdf8" : "#67e8f9",
+                  opacity: speechDetected ? 0.95 : isListening ? 0.65 : 0.3,
                 }}
-                transition={{ duration: 0.18, ease: "linear" }}
+                transition={{
+                  height: { duration, repeat: Infinity, ease: "easeInOut", delay },
+                  backgroundColor: { duration: 0.3 },
+                  opacity: { duration: 0.3 },
+                }}
               />
             );
           })}
