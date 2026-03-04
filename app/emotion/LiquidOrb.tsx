@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform } from "framer-motion";
+import { PointerEvent, useEffect } from "react";
 
 interface LiquidOrbProps {
   colors: string[];
@@ -46,8 +47,52 @@ export function LiquidOrb({ colors }: LiquidOrbProps) {
 
   const gradient = `linear-gradient(135deg, ${baseSoft} 0%, ${secondarySoft} 35%, ${baseSoft} 70%, ${secondarySoft} 100%)`;
 
+  const tiltX = useMotionValue(0);
+  const tiltY = useMotionValue(0);
+
+  const rotate = useTransform(tiltX, (v) => v * 0.35);
+  const translateY = useTransform(tiltY, (v) => v * 0.45);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("DeviceOrientationEvent" in window)) return;
+
+    const handler = (event: DeviceOrientationEvent) => {
+      const gamma = event.gamma ?? 0; // 좌우
+      const beta = event.beta ?? 0; // 앞뒤
+      const maxTilt = 18;
+      const xNorm = Math.max(-maxTilt, Math.min(maxTilt, gamma)) / maxTilt;
+      const yNorm = Math.max(-maxTilt, Math.min(maxTilt, beta)) / maxTilt;
+      tiltX.set(xNorm * 10);
+      tiltY.set(yNorm * 8);
+    };
+
+    window.addEventListener("deviceorientation", handler);
+    return () => window.removeEventListener("deviceorientation", handler);
+  }, [tiltX, tiltY]);
+
+  const handlePointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    const strengthX = 16;
+    const strengthY = 12;
+    tiltX.set(x * strengthX);
+    tiltY.set(y * strengthY);
+  };
+
+  const handlePointerLeave = () => {
+    tiltX.set(0);
+    tiltY.set(0);
+  };
+
   return (
-    <div className="relative mx-auto flex h-[260px] w-[260px] items-center justify-center sm:h-[300px] sm:w-[300px]">
+    <motion.div
+      className="relative mx-auto flex h-[260px] w-[260px] items-center justify-center sm:h-[300px] sm:w-[300px]"
+      style={{ rotate, y: translateY }}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+    >
       {/* back glow */}
       <div className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-[radial-gradient(circle_at_30%_0%,rgba(147,51,234,0.6),transparent_60%),radial-gradient(circle_at_70%_100%,rgba(56,189,248,0.55),transparent_60%)] blur-3xl opacity-70" />
 
@@ -60,7 +105,12 @@ export function LiquidOrb({ colors }: LiquidOrbProps) {
             className="liquid-orb-fill absolute inset-x-0 bottom-0 overflow-hidden"
             initial={{ height: "10%" }}
             animate={{ height: level }}
-            transition={{ duration: 0.9, ease: "easeOut" }}
+            transition={{
+              type: "spring",
+              stiffness: 120,
+              damping: 18,
+              mass: 0.7,
+            }}
           >
             <div
               className="liquid-orb-wave"
@@ -95,7 +145,7 @@ export function LiquidOrb({ colors }: LiquidOrbProps) {
           <div className="pointer-events-none absolute inset-6 rounded-full bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.12),transparent_55%)] opacity-60" />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
