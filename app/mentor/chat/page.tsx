@@ -326,11 +326,29 @@ function MentorChatInner() {
     recognition.onspeechstart = () => {
       setSpeechDetected(true);
       addLogRef.current?.("ok", "🎤 onspeechstart — 발화 감지됨 ✓");
+      // User started speaking again — cancel any pending send from previous utterance
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
     };
 
     recognition.onspeechend = () => {
       setSpeechDetected(false);
-      addLogRef.current?.("info", "🔇 onspeechend — 발화 종료");
+      addLogRef.current?.("info", "🔇 onspeechend — 발화 종료, 전송 준비 중...");
+      // Wait 600ms for Chrome to produce the final result after speech ends, then send ONCE
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = setTimeout(() => {
+        silenceTimerRef.current = null;
+        const toSend = [transcriptBufferRef.current, interimBufferRef.current]
+          .filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+        if (!toSend || isThinkingRef.current) return;
+        addLogRef.current?.("info", `📤 onspeechend → 전송: "${toSend}"`);
+        sentUpToIndexRef.current = lastResultsLengthRef.current;
+        sendSpeechRef.current?.(toSend);
+        transcriptBufferRef.current = "";
+        interimBufferRef.current = "";
+      }, 600);
     };
 
     recognition.onnomatch = (event: any) => {
@@ -400,27 +418,10 @@ function MentorChatInner() {
         interimBufferRef.current = "";
       }
 
-      // Display: show only the LATEST text to avoid showing accumulated duplicates.
-      // Priority: current interim (real-time) > latest final chunk > nothing
-      // This way the user sees just what's being recognized right now, not the whole history.
+      // Display only — NO send timer here.
+      // Sending is triggered exclusively by onspeechend (one send per utterance).
       const displayText = (interimText || transcriptBufferRef.current).replace(/\s+/g, " ").trim();
       if (displayText) setUserText(displayText);
-
-      // Silence timer: reset on every result, fires only after the user stops speaking
-      if (displayText) {
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-        silenceTimerRef.current = setTimeout(() => {
-          const toSend = [transcriptBufferRef.current, interimBufferRef.current]
-            .filter(Boolean).join(" ").replace(/\s+/g, " ");
-          if (!toSend) return;
-          addLogRef.current?.("info", `⏱ 침묵 감지 → API 전송: "${toSend}"`);
-          // Consume the interim result index too so it's not re-processed
-          sentUpToIndexRef.current = lastResultsLengthRef.current;
-          sendSpeechRef.current?.(toSend);
-          transcriptBufferRef.current = "";
-          interimBufferRef.current = "";
-        }, 1500);
-      }
     };
 
     recognition.onerror = (event: any) => {
@@ -444,9 +445,20 @@ function MentorChatInner() {
     };
 
     recognition.onend = () => {
+      // Cancel any pending onspeechend timer (onend supersedes it)
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
       const pending = `${transcriptBufferRef.current} ${interimBufferRef.current}`.trim();
       addLogRef.current?.("warn", `■ onend — 미전송 텍스트: "${pending || "(없음)"}", shouldListen=${shouldListenRef.current}`);
-      if (pending && !isThinkingRef.current) sendSpeechRef.current?.(pending);
+      // Only send if there's something left (onspeechend may have already sent it)
+      if (pending && !isThinkingRef.current) {
+        sentUpToIndexRef.current = lastResultsLengthRef.current;
+        sendSpeechRef.current?.(pending);
+        transcriptBufferRef.current = "";
+        interimBufferRef.current = "";
+      }
 
       // Auto-restart recognition if user still wants to be listening
       if (shouldListenRef.current) {
