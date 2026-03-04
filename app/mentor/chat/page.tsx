@@ -202,54 +202,61 @@ function MentorChatInner() {
     return () => clearInterval(id);
   }, [mentorText]);
 
+  // Audio context cleanup on unmount only
   useEffect(() => {
-    let mounted = true;
-    const setupAudio = async () => {
-      try {
-        addLogRef.current?.("info", "마이크 권한 요청 중...");
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        if (!mounted) return;
-        addLogRef.current?.("ok", "마이크 권한 허용됨 ✓");
-        mediaStreamRef.current = stream;
-        const ctx = new AudioContext();
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
-        const source = ctx.createMediaStreamSource(stream);
-        source.connect(analyser);
-        const data = new Uint8Array(analyser.fftSize);
-        audioCtxRef.current = ctx;
-        analyserRef.current = analyser;
-        dataArrayRef.current = data;
-
-        const tick = () => {
-          if (!analyserRef.current || !dataArrayRef.current) return;
-          analyserRef.current.getByteTimeDomainData(dataArrayRef.current as any);
-          let sum = 0;
-          for (let i = 0; i < dataArrayRef.current.length; i += 1) {
-            const v = (dataArrayRef.current[i] - 128) / 128;
-            sum += v * v;
-          }
-          const rms = Math.sqrt(sum / dataArrayRef.current.length);
-          setAudioLevel((prev) => prev * 0.72 + Math.min(1, rms * 3.4) * 0.28);
-          rafRef.current = requestAnimationFrame(tick);
-        };
-        tick();
-      } catch (e: any) {
-        const msg = e?.message ?? "알 수 없는 오류";
-        addLogRef.current?.("err", `마이크 권한 거부: ${msg}`);
-        setSttError("마이크 권한이 필요합니다.");
-      }
-    };
-
-    setupAudio();
     return () => {
-      mounted = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (audioCtxRef.current) audioCtxRef.current.close();
       if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach((t) => t.stop());
     };
   }, []);
+
+  const startWaveform = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const tick = () => {
+      if (!analyserRef.current || !dataArrayRef.current) return;
+      analyserRef.current.getByteTimeDomainData(dataArrayRef.current as any);
+      let sum = 0;
+      for (let i = 0; i < dataArrayRef.current.length; i += 1) {
+        const v = (dataArrayRef.current[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / dataArrayRef.current.length);
+      setAudioLevel((prev) => prev * 0.72 + Math.min(1, rms * 3.4) * 0.28);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    tick();
+  };
+
+  const stopWaveform = () => {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    setAudioLevel(0);
+  };
+
+  // Called lazily on first mic press — avoids mic conflict with Web Speech API
+  const ensureAudioContext = async (): Promise<boolean> => {
+    if (mediaStreamRef.current && audioCtxRef.current) return true;
+    try {
+      addLogRef.current?.("info", "마이크 권한 요청 중...");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      addLogRef.current?.("ok", "마이크 권한 허용됨 ✓");
+      mediaStreamRef.current = stream;
+      const ctx = new AudioContext();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      const source = ctx.createMediaStreamSource(stream);
+      source.connect(analyser);
+      audioCtxRef.current = ctx;
+      analyserRef.current = analyser;
+      dataArrayRef.current = new Uint8Array(analyser.fftSize);
+      return true;
+    } catch (e: any) {
+      addLogRef.current?.("err", `마이크 권한 거부: ${e?.message ?? e}`);
+      setSttError("마이크 권한이 필요합니다.");
+      return false;
+    }
+  };
 
   const resetBuffers = () => {
     transcriptBufferRef.current = "";
@@ -353,19 +360,52 @@ function MentorChatInner() {
     addLogRef.current?.("ok", "SpeechRecognition 객체 생성 완료 (ko-KR)");
 
     recognition.onstart = () => {
-      addLogRef.current?.("ok", "▶ recognition.onstart — 인식 시작됨");
+      addLogRef.current?.("ok", "▶ onstart — 인식 시작됨");
+    };
+
+    recognition.onaudiostart = () => {
+      addLogRef.current?.("ok", "🎵 onaudiostart — STT가 오디오 수신 중 ✓");
+    };
+
+    recognition.onaudioend = () => {
+      addLogRef.current?.("info", "🔕 onaudioend — STT 오디오 수신 종료");
     };
 
     recognition.onspeechstart = () => {
-      addLogRef.current?.("info", "🎤 음성 감지 시작");
+      addLogRef.current?.("ok", "🎤 onspeechstart — 발화 감지됨");
     };
 
     recognition.onspeechend = () => {
-      addLogRef.current?.("info", "🔇 음성 입력 종료");
+      addLogRef.current?.("info", "🔇 onspeechend — 발화 종료");
     };
 
-    recognition.onnomatch = () => {
-      addLogRef.current?.("warn", "⚠ onnomatch — 인식 가능한 발화 없음");
+    recognition.onnomatch = (event: any) => {
+      // Try to rescue low-confidence alternatives from the event
+      let rescued = "";
+      try {
+        for (let i = 0; i < (event?.results?.length ?? 0); i += 1) {
+          const t = event.results[i][0]?.transcript?.trim();
+          const conf = event.results[i][0]?.confidence ?? 0;
+          if (t) {
+            rescued = t;
+            addLogRef.current?.("warn", `onnomatch 저신뢰도 결과: "${t}" (${(conf * 100).toFixed(0)}%)`);
+            break;
+          }
+        }
+      } catch { /* noop */ }
+
+      if (!rescued) {
+        addLogRef.current?.("warn", "⚠ onnomatch — 인식 결과 없음 (오디오 품질 또는 네트워크 확인)");
+      }
+
+      // Fall back to interim buffer if available
+      const pending = rescued || `${transcriptBufferRef.current} ${interimBufferRef.current}`.trim();
+      if (pending && !isThinkingRef.current) {
+        addLogRef.current?.("info", `onnomatch → interim 버퍼로 전송: "${pending}"`);
+        transcriptBufferRef.current = pending;
+        interimBufferRef.current = "";
+        sendSpeechRef.current?.(pending);
+      }
     };
 
     recognition.onresult = (event: any) => {
@@ -413,7 +453,7 @@ function MentorChatInner() {
         if (shouldListenRef.current) {
           setTimeout(() => {
             if (shouldListenRef.current) {
-              try { recognition.start(); } catch { /* noop */ }
+              try { recognition.start(); startWaveform(); } catch { /* noop */ }
             }
           }, 300);
         }
@@ -436,6 +476,7 @@ function MentorChatInner() {
           if (shouldListenRef.current) {
             try {
               recognition.start();
+              startWaveform();
               addLogRef.current?.("info", "↺ recognition 재시작");
             } catch {
               // noop
@@ -444,6 +485,7 @@ function MentorChatInner() {
         }, 300);
       } else {
         setIsListening(false);
+        stopWaveform();
       }
     };
 
@@ -459,11 +501,16 @@ function MentorChatInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startListening = () => {
+  const startListening = async () => {
     if (!recognitionRef.current) {
       addLogRef.current?.("err", "❌ startListening: recognitionRef가 null");
       return;
     }
+    // Init audio context lazily on first mic press to avoid conflict with Web Speech API
+    const ok = await ensureAudioContext();
+    if (!ok) return;
+    startWaveform();
+
     shouldListenRef.current = true;
     resetBuffers();
     try {
@@ -479,6 +526,7 @@ function MentorChatInner() {
     if (!recognitionRef.current) return;
     shouldListenRef.current = false;
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    stopWaveform();
     try {
       recognitionRef.current.stop();
       addLogRef.current?.("info", "■ recognition.stop() 호출됨");
